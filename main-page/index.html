@@ -311,7 +311,6 @@
       .stat-card,
       .feedback-card,
       .login-card {
-      .feedback-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
         box-shadow: 0 24px 60px rgba(23, 21, 18, 0.08);
@@ -393,7 +392,6 @@
 
       .feedback-layout,
       .login-layout {
-      .feedback-layout {
         display: grid;
         grid-template-columns: 0.85fr 1.15fr;
         gap: 3rem;
@@ -402,7 +400,6 @@
 
       .feedback-card,
       .login-card {
-      .feedback-card {
         display: grid;
         gap: 1rem;
         background: white;
@@ -411,6 +408,9 @@
 
       .login-card {
         align-self: stretch;
+        max-width: 520px;
+        width: 100%;
+        justify-self: end;
       }
 
       .field-row {
@@ -489,8 +489,12 @@
         .overview-grid,
         .feedback-layout,
         .login-layout {
-        .feedback-layout {
           grid-template-columns: 1fr;
+        }
+
+        .login-card {
+          justify-self: stretch;
+          max-width: none;
         }
 
         .hero {
@@ -538,9 +542,7 @@
         <div class="nav-links">
           <a href="#home">Home</a>
           <a href="#overview">Overview</a>
-          <a href="#feedback">Feedback</a>
-        </div>
-        </div>
+          <a href="#login">Sign in</a>
         </div>
       </div>
     </nav>
@@ -552,8 +554,7 @@
           <h1>Celebrate student pride with clarity and purpose.</h1>
           <p class="hero-copy">PathPride brings public school spirit, house progress, achievements and student feedback into one refined digital home.</p>
           <div class="hero-actions">
-            <a class="button" href="https://forms.office.com/">Feedback</a>
-            <a class="button" href="https://forms.office.com/">Feedback</a>
+            <a class="button" href="#login">Sign in</a>
             <a class="secondary-button" href="#overview">View overview</a>
           </div>
         </div>
@@ -634,13 +635,18 @@
         <div>
           <p class="eyebrow">Login</p>
           <h2 class="section-title compact-title">Sign in with your school role.</h2>
-          <h2 class="section-title">Sign in with your school role.</h2>
-          <p class="section-copy">The login area keeps the same clean card style as feedback while collecting the details needed for the PathPride access flow.</p>
+          <p class="section-copy">Use your school email, password and role to access the PathPride experience designed for your account.</p>
         </div>
 
-        <form class="login-card">
-          <label>Email<input name="login-email" type="email" autocomplete="email" /></label>
-          <label>Password<input name="login-password" type="password" autocomplete="current-password" /></label>
+        <form class="login-card" aria-label="PathPride sign in form">
+          <label>
+            Email
+            <input name="login-email" type="email" autocomplete="email" placeholder="student@school.edu" />
+          </label>
+          <label>
+            Password
+            <input name="login-password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+          </label>
           <label>
             Role
             <select name="role">
@@ -649,12 +655,9 @@
               <option>Teacher</option>
             </select>
           </label>
-          <button class="button form-button" type="button">Continue</button>
           <button class="button form-button" type="button">Sign in</button>
-          <button class="button form-button" type="button">Prepare feedback</button>
         </form>
       </section>
     </main>
-    </footer>
   </body>
 </html>
