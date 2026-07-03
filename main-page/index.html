@@ -302,7 +302,7 @@
 
       .overview-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.15rem;
         margin-top: 3.5rem;
       }
@@ -562,10 +562,38 @@
           </div>
         </div>
 
-        <div class="hero-panel" aria-label="PathPride public school statistics preview">
-          <div class="dark-card">
-            <div class="metric-row">
+        <div class="hero-panel" aria-label="PathPride class leaderboard preview">
+          <article class="standings-card">
+            <div class="standings-header">
               <div>
+                <p class="muted">Overall class standings</p>
+                <h3>5S leads this cycle</h3>
+              </div>
+              <span class="live-pill">Live view</span>
+            </div>
+            <div class="bar-group">
+              <div>
+                <div class="bar-label"><span>5S</span><span>340 pts</span></div>
+                <div class="bar-track"><div class="bar gold"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>5P</span><span>310 pts</span></div>
+                <div class="bar-track"><div class="bar blue"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>5Q</span><span>295 pts</span></div>
+                <div class="bar-track"><div class="bar purple"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>5R</span><span>255 pts</span></div>
+                <div class="bar-track"><div class="bar green"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>5T</span><span>240 pts</span></div>
+                <div class="bar-track"><div class="bar teal"></div></div>
+              </div>
+            </div>
+          </article>
                 <p class="muted">Leaderboard</p>
                 <p class="metric-value">5S</p>
               </div>
