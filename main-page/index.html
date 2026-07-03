@@ -188,6 +188,88 @@
         backdrop-filter: blur(18px);
       }
 
+      .dark-card {
+        border-radius: 1.5rem;
+        background: #171512;
+        padding: 1.5rem;
+        color: white;
+      }
+
+      .metric-row,
+      .panel-grid,
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .metric-value {
+        margin: 0.45rem 0 0;
+        font-size: 2.65rem;
+        font-weight: 760;
+        letter-spacing: -0.055em;
+      }
+
+      .status-pill {
+        border-radius: 999px;
+        background: rgba(52, 211, 153, 0.16);
+        padding: 0.55rem 0.9rem;
+        color: #bbf7d0;
+        font-size: 0.9rem;
+        font-weight: 750;
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-top: 2rem;
+      }
+
+      .mini-card {
+        border-radius: 1.1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+      }
+
+      .mini-card strong {
+        display: block;
+        font-size: 1.6rem;
+      }
+
+      .mini-card span,
+      .muted {
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        margin-top: 1rem;
+      }
+
+      .light-card {
+        border: 1px solid rgba(23, 21, 18, 0.1);
+        border-radius: 1.35rem;
+        background: white;
+        padding: 1.25rem;
+      }
+
+      .light-card p,
+      .stat-card p {
+        color: rgba(23, 21, 18, 0.48);
+        font-size: 0.9rem;
+        font-weight: 750;
+      }
+
+      .light-card strong {
+        display: block;
+        margin-top: 0.65rem;
+        font-size: 2rem;
+        letter-spacing: -0.05em;
+      }
+
       .band {
         max-width: none;
         border-block: 1px solid rgba(23, 21, 18, 0.1);
@@ -285,10 +367,6 @@
         border-radius: inherit;
       }
 
-      .muted {
-        color: rgba(255, 255, 255, 0.55);
-      }
-
       .gold { width: 92%; background: #f2c94c; }
       .blue { width: 84%; background: #8ec5ff; }
       .purple { width: 79%; background: #a78bfa; }
@@ -298,12 +376,6 @@
       .stat-card {
         background: white;
         padding: 1.5rem;
-      }
-
-      .stat-card p {
-        color: rgba(23, 21, 18, 0.48);
-        font-size: 0.9rem;
-        font-weight: 750;
       }
 
       .stat-card strong {
@@ -450,6 +522,8 @@
           padding-top: 10rem;
         }
 
+        .mini-grid,
+        .panel-grid,
         .field-row {
           grid-template-columns: 1fr;
         }
@@ -490,35 +564,6 @@
         <div class="hero-panel" aria-label="PathPride class leaderboard preview">
           <article class="standings-card">
             <div class="standings-header">
-              <div>
-                <p class="muted">Overall class standings</p>
-                <h3>5S leads this cycle</h3>
-              </div>
-              <span class="live-pill">Live view</span>
-            </div>
-            <div class="bar-group">
-              <div>
-                <div class="bar-label"><span>5S</span><span>340 pts</span></div>
-                <div class="bar-track"><div class="bar gold"></div></div>
-              </div>
-              <div>
-                <div class="bar-label"><span>5P</span><span>310 pts</span></div>
-                <div class="bar-track"><div class="bar blue"></div></div>
-              </div>
-              <div>
-                <div class="bar-label"><span>5Q</span><span>295 pts</span></div>
-                <div class="bar-track"><div class="bar purple"></div></div>
-              </div>
-              <div>
-                <div class="bar-label"><span>5R</span><span>255 pts</span></div>
-                <div class="bar-track"><div class="bar green"></div></div>
-              </div>
-              <div>
-                <div class="bar-label"><span>5T</span><span>240 pts</span></div>
-                <div class="bar-track"><div class="bar teal"></div></div>
-              </div>
-            </div>
-          </article>
               <div>
                 <p class="muted">Overall class standings</p>
                 <h3>5S leads this cycle</h3>
