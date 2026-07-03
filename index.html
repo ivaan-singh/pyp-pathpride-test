@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PathPride</title>
+<script>
+  var path = window.location.pathname;
+  var base = path.endsWith('/') ? path : path.replace(/[^/]*$/, '');
+  window.location.replace(base + 'main-page/');
+</script>
+</head>
+<body></body>
+</html>
