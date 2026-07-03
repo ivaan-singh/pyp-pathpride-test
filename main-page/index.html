@@ -311,7 +311,6 @@
       .stat-card,
       .feedback-card,
       .login-card {
-      .feedback-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
         box-shadow: 0 24px 60px rgba(23, 21, 18, 0.08);
@@ -373,6 +372,7 @@
       .blue { width: 84%; background: #8ec5ff; }
       .purple { width: 79%; background: #a78bfa; }
       .green { width: 69%; background: #6ee7b7; }
+      .teal { width: 65%; background: #5eead4; }
 
       .stat-card {
         background: white;
@@ -393,7 +393,6 @@
 
       .feedback-layout,
       .login-layout {
-      .feedback-layout {
         display: grid;
         grid-template-columns: 0.85fr 1.15fr;
         gap: 3rem;
@@ -402,7 +401,6 @@
 
       .feedback-card,
       .login-card {
-      .feedback-card {
         display: grid;
         gap: 1rem;
         background: white;
@@ -411,6 +409,9 @@
 
       .login-card {
         align-self: stretch;
+        max-width: 520px;
+        width: 100%;
+        justify-self: end;
       }
 
       .field-row {
@@ -489,8 +490,12 @@
         .overview-grid,
         .feedback-layout,
         .login-layout {
-        .feedback-layout {
           grid-template-columns: 1fr;
+        }
+
+        .login-card {
+          justify-self: stretch;
+          max-width: none;
         }
 
         .hero {
@@ -538,9 +543,8 @@
         <div class="nav-links">
           <a href="#home">Home</a>
           <a href="#overview">Overview</a>
-          <a href="#feedback">Feedback</a>
-        </div>
-        </div>
+          <a href="https://forms.office.com/">Feedback</a>
+          <a href="#login">Sign in</a>
         </div>
       </div>
     </nav>
@@ -552,7 +556,7 @@
           <h1>Celebrate student pride with clarity and purpose.</h1>
           <p class="hero-copy">PathPride brings public school spirit, house progress, achievements and student feedback into one refined digital home.</p>
           <div class="hero-actions">
-            <a class="button" href="https://forms.office.com/">Feedback</a>
+            <a class="button" href="#login">Sign in</a>
             <a class="button" href="https://forms.office.com/">Feedback</a>
             <a class="secondary-button" href="#overview">View overview</a>
           </div>
@@ -562,20 +566,20 @@
           <div class="dark-card">
             <div class="metric-row">
               <div>
-                <p class="muted">Overall school energy</p>
-                <p class="metric-value">92%</p>
+                <p class="muted">Leaderboard</p>
+                <p class="metric-value">5S</p>
               </div>
-              <span class="status-pill">Active</span>
+              <span class="status-pill">Leading</span>
             </div>
             <div class="mini-grid">
-              <div class="mini-card"><strong>4</strong><span>Houses</span></div>
-              <div class="mini-card"><strong>18</strong><span>Achievements</span></div>
-              <div class="mini-card"><strong>1.2k</strong><span>Points</span></div>
+              <div class="mini-card"><strong>5S</strong><span>1st place</span></div>
+              <div class="mini-card"><strong>5P</strong><span>2nd place</span></div>
+              <div class="mini-card"><strong>5Q</strong><span>3rd place</span></div>
             </div>
           </div>
           <div class="panel-grid">
-            <div class="light-card"><p>Leading house</p><strong>Phoenix</strong></div>
-            <div class="light-card"><p>Latest recognition</p><strong>Service</strong></div>
+            <div class="light-card"><p>Leading class</p><strong>5S</strong></div>
+            <div class="light-card"><p>Next classes</p><strong>5P / 5Q</strong></div>
           </div>
         </div>
       </section>
@@ -590,27 +594,31 @@
             <article class="standings-card">
               <div class="standings-header">
                 <div>
-                  <p class="muted">Overall house standings</p>
-                  <h3>Phoenix leads this cycle</h3>
+                  <p class="muted">Overall class standings</p>
+                  <h3>5S leads this cycle</h3>
                 </div>
                 <span class="live-pill">Live view</span>
               </div>
               <div class="bar-group">
                 <div>
-                  <div class="bar-label"><span>Phoenix</span><span>340 pts</span></div>
+                  <div class="bar-label"><span>5S</span><span>340 pts</span></div>
                   <div class="bar-track"><div class="bar gold"></div></div>
                 </div>
                 <div>
-                  <div class="bar-label"><span>Orion</span><span>310 pts</span></div>
+                  <div class="bar-label"><span>5P</span><span>310 pts</span></div>
                   <div class="bar-track"><div class="bar blue"></div></div>
                 </div>
                 <div>
-                  <div class="bar-label"><span>Atlas</span><span>295 pts</span></div>
+                  <div class="bar-label"><span>5Q</span><span>295 pts</span></div>
                   <div class="bar-track"><div class="bar purple"></div></div>
                 </div>
                 <div>
-                  <div class="bar-label"><span>Nova</span><span>255 pts</span></div>
+                  <div class="bar-label"><span>5R</span><span>255 pts</span></div>
                   <div class="bar-track"><div class="bar green"></div></div>
+                </div>
+                <div>
+                  <div class="bar-label"><span>5T</span><span>240 pts</span></div>
+                  <div class="bar-track"><div class="bar teal"></div></div>
                 </div>
               </div>
             </article>
@@ -634,13 +642,18 @@
         <div>
           <p class="eyebrow">Login</p>
           <h2 class="section-title compact-title">Sign in with your school role.</h2>
-          <h2 class="section-title">Sign in with your school role.</h2>
-          <p class="section-copy">The login area keeps the same clean card style as feedback while collecting the details needed for the PathPride access flow.</p>
+          <p class="section-copy">Use your school email, password and role to access the PathPride experience designed for your account.</p>
         </div>
 
-        <form class="login-card">
-          <label>Email<input name="login-email" type="email" autocomplete="email" /></label>
-          <label>Password<input name="login-password" type="password" autocomplete="current-password" /></label>
+        <form class="login-card" aria-label="PathPride sign in form">
+          <label>
+            Email
+            <input name="login-email" type="email" autocomplete="email" placeholder="student@school.edu" />
+          </label>
+          <label>
+            Password
+            <input name="login-password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+          </label>
           <label>
             Role
             <select name="role">
@@ -649,12 +662,9 @@
               <option>Teacher</option>
             </select>
           </label>
-          <button class="button form-button" type="button">Continue</button>
           <button class="button form-button" type="button">Sign in</button>
-          <button class="button form-button" type="button">Prepare feedback</button>
         </form>
       </section>
     </main>
-    </footer>
   </body>
 </html>
