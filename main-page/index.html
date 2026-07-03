@@ -98,7 +98,7 @@
 
       .hero {
         display: grid;
-        grid-template-columns: 1.05fr 0.95fr;
+        grid-template-columns: 1fr;
         gap: 4rem;
         min-height: 100vh;
         align-items: center;
@@ -179,97 +179,6 @@
         background: white;
       }
 
-      .hero-panel {
-        border: 1px solid rgba(23, 21, 18, 0.1);
-        border-radius: 2rem;
-        background: rgba(255, 255, 255, 0.68);
-        padding: 1.25rem;
-        box-shadow: 0 35px 90px rgba(23, 21, 18, 0.12);
-        backdrop-filter: blur(18px);
-      }
-
-      .dark-card {
-        border-radius: 1.5rem;
-        background: #171512;
-        padding: 1.5rem;
-        color: white;
-      }
-
-      .metric-row,
-      .panel-grid,
-      .footer-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-      }
-
-      .metric-value {
-        margin: 0.45rem 0 0;
-        font-size: 2.65rem;
-        font-weight: 760;
-        letter-spacing: -0.055em;
-      }
-
-      .status-pill {
-        border-radius: 999px;
-        background: rgba(52, 211, 153, 0.16);
-        padding: 0.55rem 0.9rem;
-        color: #bbf7d0;
-        font-size: 0.9rem;
-        font-weight: 750;
-      }
-
-      .mini-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
-        margin-top: 2rem;
-      }
-
-      .mini-card {
-        border-radius: 1.1rem;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-      }
-
-      .mini-card strong {
-        display: block;
-        font-size: 1.6rem;
-      }
-
-      .mini-card span,
-      .muted {
-        color: rgba(255, 255, 255, 0.55);
-      }
-
-      .panel-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        margin-top: 1rem;
-      }
-
-      .light-card {
-        border: 1px solid rgba(23, 21, 18, 0.1);
-        border-radius: 1.35rem;
-        background: white;
-        padding: 1.25rem;
-      }
-
-      .light-card p,
-      .stat-card p {
-        color: rgba(23, 21, 18, 0.48);
-        font-size: 0.9rem;
-        font-weight: 750;
-      }
-
-      .light-card strong {
-        display: block;
-        margin-top: 0.65rem;
-        font-size: 2rem;
-        letter-spacing: -0.05em;
-      }
-
       .band {
         max-width: none;
         border-block: 1px solid rgba(23, 21, 18, 0.1);
@@ -302,81 +211,28 @@
 
       .overview-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.15rem;
         margin-top: 3.5rem;
       }
 
-      .standings-card,
       .stat-card,
       .feedback-card,
       .login-card {
-      .feedback-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
         box-shadow: 0 24px 60px rgba(23, 21, 18, 0.08);
       }
 
-      .standings-card {
-        background: #171512;
-        padding: 1.5rem;
-        color: white;
-      }
-
-      .standings-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-
-      .standings-header h3 {
-        margin: 0.6rem 0 0;
-        font-size: 2rem;
-        letter-spacing: -0.045em;
-      }
-
-      .live-pill {
-        align-self: flex-start;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.4rem 0.75rem;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.85rem;
-      }
-
-      .bar-group {
-        display: grid;
-        gap: 1.15rem;
-      }
-
-      .bar-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.45rem;
-        font-size: 0.95rem;
-      }
-
-      .bar-track {
-        height: 0.72rem;
-        overflow: hidden;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
-      }
-
-      .bar {
-        height: 100%;
-        border-radius: inherit;
-      }
-
-      .gold { width: 92%; background: #f2c94c; }
-      .blue { width: 84%; background: #8ec5ff; }
-      .purple { width: 79%; background: #a78bfa; }
-      .green { width: 69%; background: #6ee7b7; }
-
       .stat-card {
         background: white;
         padding: 1.5rem;
+      }
+
+      .stat-card p {
+        color: rgba(23, 21, 18, 0.48);
+        font-size: 0.9rem;
+        font-weight: 750;
       }
 
       .stat-card strong {
@@ -393,7 +249,6 @@
 
       .feedback-layout,
       .login-layout {
-      .feedback-layout {
         display: grid;
         grid-template-columns: 0.85fr 1.15fr;
         gap: 3rem;
@@ -402,7 +257,6 @@
 
       .feedback-card,
       .login-card {
-      .feedback-card {
         display: grid;
         gap: 1rem;
         background: white;
@@ -411,6 +265,9 @@
 
       .login-card {
         align-self: stretch;
+        max-width: 520px;
+        width: 100%;
+        justify-self: end;
       }
 
       .field-row {
@@ -489,8 +346,12 @@
         .overview-grid,
         .feedback-layout,
         .login-layout {
-        .feedback-layout {
           grid-template-columns: 1fr;
+        }
+
+        .login-card {
+          justify-self: stretch;
+          max-width: none;
         }
 
         .hero {
@@ -518,8 +379,6 @@
           padding-top: 10rem;
         }
 
-        .mini-grid,
-        .panel-grid,
         .field-row {
           grid-template-columns: 1fr;
         }
@@ -538,9 +397,8 @@
         <div class="nav-links">
           <a href="#home">Home</a>
           <a href="#overview">Overview</a>
-          <a href="#feedback">Feedback</a>
-        </div>
-        </div>
+          <a href="https://forms.office.com/">Feedback</a>
+          <a href="#login">Sign in</a>
         </div>
       </div>
     </nav>
@@ -552,32 +410,12 @@
           <h1>Celebrate student pride with clarity and purpose.</h1>
           <p class="hero-copy">PathPride brings public school spirit, house progress, achievements and student feedback into one refined digital home.</p>
           <div class="hero-actions">
-            <a class="button" href="https://forms.office.com/">Feedback</a>
+            <a class="button" href="#login">Sign in</a>
             <a class="button" href="https://forms.office.com/">Feedback</a>
             <a class="secondary-button" href="#overview">View overview</a>
           </div>
         </div>
 
-        <div class="hero-panel" aria-label="PathPride public school statistics preview">
-          <div class="dark-card">
-            <div class="metric-row">
-              <div>
-                <p class="muted">Overall school energy</p>
-                <p class="metric-value">92%</p>
-              </div>
-              <span class="status-pill">Active</span>
-            </div>
-            <div class="mini-grid">
-              <div class="mini-card"><strong>4</strong><span>Houses</span></div>
-              <div class="mini-card"><strong>18</strong><span>Achievements</span></div>
-              <div class="mini-card"><strong>1.2k</strong><span>Points</span></div>
-            </div>
-          </div>
-          <div class="panel-grid">
-            <div class="light-card"><p>Leading house</p><strong>Phoenix</strong></div>
-            <div class="light-card"><p>Latest recognition</p><strong>Service</strong></div>
-          </div>
-        </div>
       </section>
 
       <section id="overview" class="page-section band">
@@ -587,34 +425,6 @@
           <p class="section-copy">Clear standings, points and achievements help the community follow student council progress without requiring an account.</p>
 
           <div class="overview-grid">
-            <article class="standings-card">
-              <div class="standings-header">
-                <div>
-                  <p class="muted">Overall house standings</p>
-                  <h3>Phoenix leads this cycle</h3>
-                </div>
-                <span class="live-pill">Live view</span>
-              </div>
-              <div class="bar-group">
-                <div>
-                  <div class="bar-label"><span>Phoenix</span><span>340 pts</span></div>
-                  <div class="bar-track"><div class="bar gold"></div></div>
-                </div>
-                <div>
-                  <div class="bar-label"><span>Orion</span><span>310 pts</span></div>
-                  <div class="bar-track"><div class="bar blue"></div></div>
-                </div>
-                <div>
-                  <div class="bar-label"><span>Atlas</span><span>295 pts</span></div>
-                  <div class="bar-track"><div class="bar purple"></div></div>
-                </div>
-                <div>
-                  <div class="bar-label"><span>Nova</span><span>255 pts</span></div>
-                  <div class="bar-track"><div class="bar green"></div></div>
-                </div>
-              </div>
-            </article>
-
             <article class="stat-card">
               <p>Total points</p>
               <strong>1,200</strong>
@@ -634,13 +444,18 @@
         <div>
           <p class="eyebrow">Login</p>
           <h2 class="section-title compact-title">Sign in with your school role.</h2>
-          <h2 class="section-title">Sign in with your school role.</h2>
-          <p class="section-copy">The login area keeps the same clean card style as feedback while collecting the details needed for the PathPride access flow.</p>
+          <p class="section-copy">Use your school email, password and role to access the PathPride experience designed for your account.</p>
         </div>
 
-        <form class="login-card">
-          <label>Email<input name="login-email" type="email" autocomplete="email" /></label>
-          <label>Password<input name="login-password" type="password" autocomplete="current-password" /></label>
+        <form class="login-card" aria-label="PathPride sign in form">
+          <label>
+            Email
+            <input name="login-email" type="email" autocomplete="email" placeholder="student@school.edu" />
+          </label>
+          <label>
+            Password
+            <input name="login-password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+          </label>
           <label>
             Role
             <select name="role">
@@ -649,12 +464,9 @@
               <option>Teacher</option>
             </select>
           </label>
-          <button class="button form-button" type="button">Continue</button>
           <button class="button form-button" type="button">Sign in</button>
-          <button class="button form-button" type="button">Prepare feedback</button>
         </form>
       </section>
     </main>
-    </footer>
   </body>
 </html>
