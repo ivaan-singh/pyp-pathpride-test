@@ -240,6 +240,13 @@
         color: rgba(255, 255, 255, 0.55);
       }
 
+      .score-status {
+        margin: 1rem 0 0;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+
       .gold { width: 92%; background: #f2c94c; }
       .blue { width: 84%; background: #8ec5ff; }
       .purple { width: 79%; background: #a78bfa; }
@@ -454,8 +461,8 @@
                 <div class="bar-label"><span>5S</span><span>340 pts</span></div>
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
-              <div data-house="5P" data-points="310">
-                <div class="bar-label"><span>5P</span><span>310 pts</span></div>
+              <div data-house="5P" data-points="0">
+                <div class="bar-label"><span>5P</span><span id="five-p-score">Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
               </div>
               <div data-house="5Q" data-points="295">
@@ -471,6 +478,7 @@
                 <div class="bar-track"><div class="bar teal"></div></div>
               </div>
             </div>
+            <p class="score-status" id="leaderboard-status" role="status">Loading live 5P score...</p>
           </article>
         </div>
       </section>
@@ -529,16 +537,49 @@
     <script>
       const leaderboard = document.getElementById('leaderboard');
       const leadingHouse = document.getElementById('leading-house');
+      const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
+      const fivePScore = document.getElementById('five-p-score');
+      const leaderboardStatus = document.getElementById('leaderboard-status');
 
-      const entries = [...leaderboard.querySelectorAll('[data-house]')];
-      const topEntry = entries.reduce((best, entry) => {
-        const points = Number(entry.dataset.points || 0);
-        return !best || points > Number(best.dataset.points || 0) ? entry : best;
-      }, null);
+      function updateLeader() {
+        const entries = [...leaderboard.querySelectorAll('[data-house]')];
+        const topEntry = entries.reduce((best, entry) => {
+          const points = Number(entry.dataset.points || 0);
+          return !best || points > Number(best.dataset.points || 0) ? entry : best;
+        }, null);
 
-      if (topEntry) {
-        leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+        if (topEntry) {
+          leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+        }
       }
+
+      async function loadFivePScore() {
+        try {
+          const response = await fetch('/api/leaderboard/5p', { headers: { Accept: 'application/json' } });
+          const payload = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(payload.error || 'Backend request failed.');
+          }
+
+          const total = Number(payload.total);
+          if (!Number.isFinite(total)) {
+            throw new Error('Backend returned an invalid 5P score.');
+          }
+
+          fivePEntry.dataset.points = String(total);
+          fivePScore.textContent = `${total} pts`;
+          leaderboardStatus.textContent = `Live 5P score loaded from ${payload.section || '5P'}.`;
+          updateLeader();
+        } catch (error) {
+          fivePScore.textContent = 'Error';
+          leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
+          updateLeader();
+        }
+      }
+
+      updateLeader();
+      loadFivePScore();
     </script>
   </body>
 </html>
