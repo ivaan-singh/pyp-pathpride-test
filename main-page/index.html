@@ -612,6 +612,32 @@
         }
       }
 
+
+      async function loadFivePScore() {
+        try {
+          const response = await fetch('/api/leaderboard/5p', { headers: { Accept: 'application/json' } });
+          const payload = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(payload.error || 'Backend request failed.');
+          }
+
+          const total = Number(payload.total);
+          if (!Number.isFinite(total)) {
+            throw new Error('Backend returned an invalid 5P score.');
+          }
+
+          fivePEntry.dataset.points = String(total);
+          fivePScore.textContent = `${total} pts`;
+          leaderboardStatus.textContent = `Live 5P score loaded from ${payload.section || '5P'}.`;
+          updateLeader();
+        } catch (error) {
+          fivePScore.textContent = 'Error';
+          leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
+          updateLeader();
+        }
+      }
+
       updateLeader();
       loadFivePScore();
     </script>
