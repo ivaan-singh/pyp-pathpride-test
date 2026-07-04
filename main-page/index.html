@@ -585,6 +585,84 @@
           return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
         }
 
+        async function fetchGoogleSheetCellValue(sheetName, address) {
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+
+          try {
+            const response = await fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
+              method: 'GET',
+              headers: { Accept: 'text/csv,text/plain,*/*' },
+              redirect: 'follow',
+              signal: controller.signal
+            });
+
+            if (!response.ok) {
+              throw new Error('Could not load live 5P score.');
+            }
+
+            return parseSingleCellCsv(await response.text());
+          } finally {
+            window.clearTimeout(timeoutId);
+          }
+        }
+
+        async function get5PScoreFromGoogleSheet() {
+          const [scholastic, specialists] = await Promise.all([
+            fetchGoogleSheetCellValue('Scholastic', 'F7'),
+            fetchGoogleSheetCellValue('Specialists', 'H7')
+          ]);
+
+          return scholastic + specialists;
+        }
+
+        async function loadFivePScore() {
+          try {
+            const total = await get5PScoreFromGoogleSheet();
+            fivePEntry.dataset.points = String(total);
+            fivePScore.textContent = `${total} pts`;
+            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
+            updateLeader();
+          } catch (error) {
+            fivePScore.textContent = 'Error';
+            leaderboardStatus.textContent = 'Could not load live 5P score.';
+            updateLeader();
+          }
+        }
+
+        updateLeader();
+        loadFivePScore();
+      })();
+
+        function parseSingleCellCsv(csvText) {
+          const trimmed = csvText.trim();
+          const value = trimmed.startsWith('"') && trimmed.endsWith('"')
+            ? trimmed.slice(1, -1).replace(/""/g, '"')
+            : trimmed;
+          const number = Number(value.replace(/,/g, ''));
+
+          if (value === '' || !Number.isFinite(number)) {
+            throw new Error('Could not load live 5P score.');
+          }
+
+          return number;
+        }
+
+        function buildGoogleSheetsCsvUrl(sheetName, address) {
+          const sheetId = VITE_GOOGLE_SHEET_ID.trim();
+          if (!sheetId) {
+            throw new Error('Could not load live 5P score.');
+          }
+
+          const params = new URLSearchParams({
+            tqx: 'out:csv',
+            sheet: sheetName,
+            range: address
+          });
+
+          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
+        }
+
         async function readGoogleSheetCell(sheetName, address) {
           const controller = new AbortController();
           const timeoutId = window.setTimeout(() => controller.abort(), 8000);
