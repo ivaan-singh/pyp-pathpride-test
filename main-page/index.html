@@ -554,6 +554,16 @@
         }
       }
 
+      function parseSingleCellCsv(csvText) {
+        const trimmed = csvText.trim();
+        const value = trimmed.startsWith('"') && trimmed.endsWith('"')
+          ? trimmed.slice(1, -1).replace(/""/g, '"')
+          : trimmed;
+        const number = Number(value.replace(/,/g, ''));
+
+        if (value === '' || !Number.isFinite(number)) {
+          throw new Error('Could not load live 5P score.');
+
       function parseSingleCellCsv(csvText, label) {
         const trimmed = csvText.trim();
         const value = trimmed.startsWith('"') && trimmed.endsWith('"')
@@ -568,6 +578,10 @@
         return number;
       }
 
+      function buildGoogleSheetsCsvUrl(sheetName, address) {
+        const sheetId = VITE_GOOGLE_SHEET_ID.trim();
+        if (!sheetId) {
+          throw new Error('Could not load live 5P score.');
       async function readGoogleSheetCell(sheetName, address) {
         const sheetId = VITE_GOOGLE_SHEET_ID.trim();
         if (!sheetId) {
@@ -579,6 +593,22 @@
           sheet: sheetName,
           range: address
         });
+
+        return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
+      }
+
+      async function readGoogleSheetCell(sheetName, address) {
+        const response = await fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
+          method: 'GET',
+          headers: { Accept: 'text/csv,text/plain,*/*' },
+          redirect: 'follow'
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not load live 5P score.');
+        }
+
+        return parseSingleCellCsv(await response.text());
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?${params}`;
         const response = await fetch(url);
 
@@ -607,6 +637,7 @@
           updateLeader();
         } catch (error) {
           fivePScore.textContent = 'Error';
+          leaderboardStatus.textContent = 'Could not load live 5P score.';
           leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
           updateLeader();
         }
