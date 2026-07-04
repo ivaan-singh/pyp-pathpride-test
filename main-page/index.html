@@ -543,12 +543,112 @@
         var fivePEntry = leaderboard.querySelector('[data-house="5P"]');
         var fivePScore = document.getElementById('five-p-score');
         var leaderboardStatus = document.getElementById('leaderboard-status');
+        var loadingFallbackId = window.setTimeout(showLoadError, 10000);
+
+        function showLoadError() {
+          window.clearTimeout(loadingFallbackId);
 
         function showLoadError() {
           fivePScore.textContent = 'Error';
           leaderboardStatus.textContent = 'Could not load live 5P score.';
           updateLeader();
         }
+
+        function updateLeader() {
+          var entries = Array.prototype.slice.call(leaderboard.querySelectorAll('[data-house]'));
+          var topEntry = entries.reduce(function (best, entry) {
+            var points = Number(entry.dataset.points || 0);
+            return !best || points > Number(best.dataset.points || 0) ? entry : best;
+          }, null);
+
+          if (topEntry) {
+            leadingHouse.textContent = topEntry.dataset.house + ' leads';
+          }
+        }
+
+        function parseSingleCellCsv(csvText) {
+          var trimmed = csvText.trim();
+          var value = trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"'
+            ? trimmed.slice(1, -1).replace(/""/g, '"')
+            : trimmed;
+          var number = Number(value.replace(/,/g, ''));
+
+          if (value === '' || !Number.isFinite(number)) {
+            throw new Error('Could not load live 5P score.');
+          }
+
+          return number;
+        }
+
+        function buildGoogleSheetsCsvUrl(sheetName, address) {
+          var sheetId = googleSheetId.trim();
+          var params;
+
+          if (!sheetId) {
+            throw new Error('Could not load live 5P score.');
+          }
+
+          params = new URLSearchParams({
+            tqx: 'out:csv',
+            sheet: sheetName,
+            range: address
+          });
+
+          return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?' + params.toString();
+        }
+
+        function fetchGoogleSheetCellValue(sheetName, address) {
+          var timeoutId;
+          var timeoutPromise = new Promise(function (resolve, reject) {
+            timeoutId = window.setTimeout(function () {
+              reject(new Error('Could not load live 5P score.'));
+            }, 8000);
+          });
+          var cellPromise = fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
+            method: 'GET',
+            headers: { Accept: 'text/csv,text/plain,*/*' },
+            redirect: 'follow'
+          }).then(function (response) {
+            if (!response.ok) {
+              throw new Error('Could not load live 5P score.');
+            }
+
+            return response.text();
+          }).then(function (csvText) {
+            return parseSingleCellCsv(csvText);
+          });
+
+          return Promise.race([cellPromise, timeoutPromise]).then(function (number) {
+            window.clearTimeout(timeoutId);
+            return number;
+          }, function (error) {
+            window.clearTimeout(timeoutId);
+            throw error;
+          });
+        }
+
+        function get5PScoreFromGoogleSheet() {
+          return Promise.all([
+            fetchGoogleSheetCellValue('Scholastic', 'F7'),
+            fetchGoogleSheetCellValue('Specialists', 'H7')
+          ]).then(function (scores) {
+            return scores[0] + scores[1];
+          });
+        }
+
+        function loadFivePScore() {
+          Promise.resolve().then(get5PScoreFromGoogleSheet).then(function (total) {
+            fivePEntry.dataset.points = String(total);
+            fivePScore.textContent = total + ' pts';
+            window.clearTimeout(loadingFallbackId);
+            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
+            updateLeader();
+          }).catch(showLoadError);
+        }
+
+        updateLeader();
+        loadFivePScore();
+      })();
 
         function updateLeader() {
           var entries = Array.prototype.slice.call(leaderboard.querySelectorAll('[data-house]'));
