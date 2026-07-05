@@ -234,7 +234,9 @@
 
       .bar {
         height: 100%;
+        width: 0%;
         border-radius: inherit;
+        transition: width 320ms ease;
       }
 
       .muted {
@@ -248,11 +250,11 @@
         line-height: 1.5;
       }
 
-      .gold { width: 92%; background: #f2c94c; }
-      .blue { width: 84%; background: #8ec5ff; }
-      .purple { width: 79%; background: #a78bfa; }
-      .green { width: 69%; background: #6ee7b7; }
-      .teal { width: 65%; background: #5eead4; }
+      .gold { background: #f2c94c; }
+      .blue { background: #8ec5ff; }
+      .purple { background: #a78bfa; }
+      .green { background: #6ee7b7; }
+      .teal { background: #5eead4; }
 
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
@@ -493,7 +495,7 @@
           <div class="overview-grid">
             <article class="stat-card">
               <p>Total points</p>
-              <strong>1,200</strong>
+              <strong id="total-points">1,200</strong>
               <span>Combined points earned through participation, service and school events.</span>
             </article>
 
@@ -549,17 +551,49 @@
         const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
         const fivePScore = document.getElementById('five-p-score');
         const leaderboardStatus = document.getElementById('leaderboard-status');
+        const totalPoints = document.getElementById('total-points');
 
-        function updateLeader() {
+        function getEntryPoints(entry) {
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
+
+        function formatPoints(points) {
+          return `${points.toLocaleString()} pts`;
+        }
+
+        function updateLeaderboard() {
           const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
-          const topEntry = entries.reduce((best, entry) => {
-            const points = Number(entry.dataset.points || 0);
-            const bestPoints = best ? Number(best.dataset.points || 0) : 0;
-            return !best || points > bestPoints ? entry : best;
-          }, null);
+          const sortedEntries = entries.sort((current, next) => getEntryPoints(next) - getEntryPoints(current));
+          const highestPoints = Math.max(...sortedEntries.map(getEntryPoints), 0);
+          const combinedPoints = sortedEntries.reduce((sum, entry) => sum + getEntryPoints(entry), 0);
+
+          sortedEntries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = highestPoints > 0 ? (points / highestPoints) * 100 : 0;
+            const scoreLabel = entry.querySelector('.bar-label span:last-child');
+            const bar = entry.querySelector('.bar');
+
+            if (scoreLabel) {
+              scoreLabel.textContent = formatPoints(points);
+            }
+
+            if (bar) {
+              bar.style.width = `${percentage}%`;
+              bar.setAttribute('aria-label', `${entry.dataset.house} has ${Math.round(percentage)}% of the leading score`);
+            }
+
+            leaderboard.appendChild(entry);
+          });
+
+          const topEntry = sortedEntries[0];
 
           if (topEntry) {
             leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+          }
+
+          if (totalPoints) {
+            totalPoints.textContent = combinedPoints.toLocaleString();
           }
         }
 
@@ -625,11 +659,11 @@
             fivePScore.textContent = 'Error';
             leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
           } finally {
-            updateLeader();
+            updateLeaderboard();
           }
         }
 
-        updateLeader();
+        updateLeaderboard();
         loadFivePScore();
       })();
     </script>
