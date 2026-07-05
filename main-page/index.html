@@ -924,6 +924,7 @@
           }
 
           if (tiedEntries.length === Object.keys(CLASS_SHEETS).length) {
+            return 'All teams are tied';
             return 'Everybody is tied';
           }
 
@@ -931,6 +932,7 @@
             return `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
           }
 
+          return `${tiedEntries.length} teams are tied`;
           return `${tiedEntries.length} sections are tied`;
         }
 
