@@ -573,6 +573,33 @@
             pointsLabel.textContent = `${points} pts`;
           }
 
+
+        function getEntryPoints(entry) {
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
+        function updateLeader() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+          const topEntry = entries.reduce((best, entry) => {
+            const points = Number(entry.dataset.points || 0);
+            const bestPoints = best ? Number(best.dataset.points || 0) : 0;
+            return !best || points > bestPoints ? entry : best;
+          }, null);
+
+        function scoreToPercent(points) {
+          const percentage = (points / MAX_SCORE) * 100;
+          return Math.max(0, Math.min(100, percentage));
+        }
+
+        function updateEntryDisplay(entry) {
+          const points = getEntryPoints(entry);
+          const pointsLabel = entry.querySelector('[data-points-label]');
+          const bar = entry.querySelector('.bar');
+
+          if (pointsLabel && pointsLabel.id !== 'five-p-score') {
+            pointsLabel.textContent = `${points} pts`;
+          }
+
           if (bar) {
             bar.style.width = `${scoreToPercent(points).toFixed(4)}%`;
           }
@@ -665,6 +692,61 @@
         async function getFivePScoreDirectlyFromSheet() {
           const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
           return scores.reduce((sum, score) => sum + score, 0);
+        function parseSingleCellCsv(csvText, label) {
+          const trimmed = csvText.trim();
+          const value = trimmed.startsWith('"') && trimmed.endsWith('"')
+            ? trimmed.slice(1, -1).replace(/""/g, '"')
+            : trimmed;
+          const number = Number(value.replace(/,/g, ''));
+
+          if (value === '' || !Number.isFinite(number)) {
+            throw new Error(`${label} is not a number.`);
+          }
+
+          return number;
+        }
+
+        function buildGoogleSheetsCsvUrl(sheetName, range) {
+          const params = new URLSearchParams({
+            tqx: 'out:csv',
+            sheet: sheetName,
+            range
+          });
+
+          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(GOOGLE_SHEET_ID)}/gviz/tq?${params.toString()}`;
+        }
+
+        async function fetchWithTimeout(url) {
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+          try {
+            return await fetch(url, {
+              cache: 'no-store',
+              headers: { Accept: 'text/csv,text/plain,*/*' },
+              redirect: 'follow',
+              signal: controller.signal
+            });
+          } finally {
+            window.clearTimeout(timeoutId);
+          }
+        }
+
+        async function readGoogleSheetCell({ sheet, range }) {
+          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheet, range));
+
+          if (!response.ok) {
+            throw new Error(`${sheet}!${range} cannot be read.`);
+          }
+
+        async function readGoogleSheetCell({ sheet, range }) {
+          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheet, range));
+
+          if (!response.ok) {
+            throw new Error(`${sheet}!${range} cannot be read.`);
+          }
+
+          return parseSingleCellCsv(await response.text(), `${sheet}!${range}`);
         }
 
         async function loadFivePScore() {
@@ -675,6 +757,8 @@
             } catch (apiError) {
               total = await getFivePScoreDirectlyFromSheet();
             }
+            const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
+            const total = scores.reduce((sum, score) => sum + score, 0);
 
             fivePEntry.dataset.points = String(total);
             fivePScore.textContent = `${total} pts`;
@@ -684,6 +768,7 @@
             leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
           } finally {
             updateLeaderboard();
+            updateLeader();
           }
         }
 
