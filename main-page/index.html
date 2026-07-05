@@ -536,6 +536,125 @@
     </main>
 
     <script>
+      var PathPrideLiveLeaderboard = {
+        sheetId: '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU',
+        fallbackTimer: null,
+        score: 0
+      };
+
+      PathPrideLiveLeaderboard.leaderboard = document.getElementById('leaderboard');
+      PathPrideLiveLeaderboard.leadingHouse = document.getElementById('leading-house');
+      PathPrideLiveLeaderboard.fivePEntry = PathPrideLiveLeaderboard.leaderboard.querySelector('[data-house="5P"]');
+      PathPrideLiveLeaderboard.fivePScore = document.getElementById('five-p-score');
+      PathPrideLiveLeaderboard.status = document.getElementById('leaderboard-status');
+
+      PathPrideLiveLeaderboard.showError = function () {
+        window.clearTimeout(PathPrideLiveLeaderboard.fallbackTimer);
+        PathPrideLiveLeaderboard.fivePScore.textContent = 'Error';
+        PathPrideLiveLeaderboard.status.textContent = 'Could not load live 5P score.';
+        PathPrideLiveLeaderboard.updateLeader();
+      };
+
+      PathPrideLiveLeaderboard.updateLeader = function () {
+        var entries = Array.prototype.slice.call(PathPrideLiveLeaderboard.leaderboard.querySelectorAll('[data-house]'));
+        var topEntry = entries.reduce(function (best, entry) {
+          var points = Number(entry.getAttribute('data-points') || 0);
+          var bestPoints = best ? Number(best.getAttribute('data-points') || 0) : 0;
+          return !best || points > bestPoints ? entry : best;
+        }, null);
+
+        if (topEntry) {
+          PathPrideLiveLeaderboard.leadingHouse.textContent = topEntry.getAttribute('data-house') + ' leads';
+        }
+      };
+
+      PathPrideLiveLeaderboard.buildCellUrl = function (sheetName, cellAddress) {
+        var sheetId = PathPrideLiveLeaderboard.sheetId.trim();
+
+        if (!sheetId) {
+          throw new Error('Missing Google Sheet ID');
+        }
+
+        return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(sheetName) + '&range=' + encodeURIComponent(cellAddress);
+      };
+
+      PathPrideLiveLeaderboard.parseCellNumber = function (csvText) {
+        var value = csvText.trim();
+        var parsedNumber;
+
+        if (value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+          value = value.slice(1, -1).replace(/""/g, '"');
+        }
+
+        parsedNumber = Number(value.replace(/,/g, ''));
+
+        if (value === '' || !Number.isFinite(parsedNumber)) {
+          throw new Error('Cell value is not a number');
+        }
+
+        return parsedNumber;
+      };
+
+      PathPrideLiveLeaderboard.fetchCellNumber = function (sheetName, cellAddress) {
+        var controller = window.AbortController ? new AbortController() : null;
+        var fetchOptions = { method: 'GET', cache: 'no-store' };
+        var timeoutId;
+
+        if (controller) {
+          fetchOptions.signal = controller.signal;
+        }
+
+        timeoutId = window.setTimeout(function () {
+          if (controller) {
+            controller.abort();
+          }
+        }, 8000);
+
+        return fetch(PathPrideLiveLeaderboard.buildCellUrl(sheetName, cellAddress), fetchOptions)
+          .then(function (response) {
+            window.clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              throw new Error('Google Sheets request failed');
+            }
+
+            return response.text();
+          })
+          .then(function (csvText) {
+            var cellNumber = PathPrideLiveLeaderboard.parseCellNumber(csvText);
+            return cellNumber;
+          });
+      };
+
+      PathPrideLiveLeaderboard.loadFivePScore = function () {
+        var scholasticScore = 0;
+        var specialistsScore = 0;
+        var totalScore = 0;
+
+        PathPrideLiveLeaderboard.fallbackTimer = window.setTimeout(PathPrideLiveLeaderboard.showError, 10000);
+
+        PathPrideLiveLeaderboard.fetchCellNumber('Scholastic', 'F7')
+          .then(function (cellNumber) {
+            scholasticScore = cellNumber;
+            return PathPrideLiveLeaderboard.fetchCellNumber('Specialists', 'H7');
+          })
+          .then(function (cellNumber) {
+            specialistsScore = cellNumber;
+            totalScore = scholasticScore + specialistsScore;
+            PathPrideLiveLeaderboard.score = totalScore;
+            PathPrideLiveLeaderboard.fivePEntry.setAttribute('data-points', String(totalScore));
+            PathPrideLiveLeaderboard.fivePScore.textContent = totalScore + ' pts';
+            PathPrideLiveLeaderboard.status.textContent = 'Live 5P score loaded from Google Sheets.';
+            window.clearTimeout(PathPrideLiveLeaderboard.fallbackTimer);
+            PathPrideLiveLeaderboard.updateLeader();
+          })
+          .catch(function () {
+            PathPrideLiveLeaderboard.showError();
+          });
+      };
+
+      PathPrideLiveLeaderboard.updateLeader();
+      PathPrideLiveLeaderboard.loadFivePScore();
       var pathPrideGoogleSheetId = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
       var pathPrideLeaderboard = document.getElementById('leaderboard');
       var pathPrideLeadingHouse = document.getElementById('leading-house');
