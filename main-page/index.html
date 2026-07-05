@@ -234,7 +234,9 @@
 
       .bar {
         height: 100%;
+        width: 0%;
         border-radius: inherit;
+        transition: width 320ms ease;
       }
 
       .muted {
@@ -248,12 +250,19 @@
         line-height: 1.5;
       }
 
-      .gold { width: 92%; background: #f2c94c; }
-      .blue { width: 84%; background: #8ec5ff; }
-      .purple { width: 79%; background: #a78bfa; }
-      .green { width: 69%; background: #6ee7b7; }
-      .teal { width: 65%; background: #5eead4; }
+      .gold { background: #f2c94c; }
+      .blue { background: #8ec5ff; }
+      .purple { background: #a78bfa; }
+      .green { background: #6ee7b7; }
+      .teal { background: #5eead4; }
 
+
+      .overview-grid {
+        display: grid;
+        grid-template-columns: 0.85fr 1.15fr;
+        gap: 1.5rem;
+        align-items: stretch;
+      }
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
@@ -278,6 +287,90 @@
       .stat-card span {
         color: rgba(23, 21, 18, 0.58);
         line-height: 1.6;
+      }
+
+      .stats-card {
+        display: grid;
+        gap: 1.25rem;
+      }
+
+      .stats-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .stats-card-header p {
+        margin: 0;
+      }
+
+      .class-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        justify-content: flex-end;
+      }
+
+      .class-tab {
+        border: 1px solid rgba(23, 21, 18, 0.1);
+        border-radius: 999px;
+        background: #f7f5f0;
+        padding: 0.45rem 0.7rem;
+        color: rgba(23, 21, 18, 0.58);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .class-tab.active {
+        background: #171512;
+        color: white;
+      }
+
+      .subject-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .subject-stat-panel {
+        border: 1px solid rgba(23, 21, 18, 0.08);
+        border-radius: 1.35rem;
+        background: #f7f5f0;
+        padding: 1rem;
+      }
+
+      .subject-stat-panel h4 {
+        margin: 0 0 0.85rem;
+        font-size: 1rem;
+      }
+
+      .subject-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid rgba(23, 21, 18, 0.08);
+        padding-top: 0.7rem;
+        margin-top: 0.7rem;
+        color: rgba(23, 21, 18, 0.68);
+        font-weight: 700;
+      }
+
+      .subject-row strong {
+        display: inline;
+        margin: 0;
+        color: #171512;
+        font-size: 1rem;
+        letter-spacing: normal;
+      }
+
+      .stats-note {
+        margin: 0;
+        color: rgba(23, 21, 18, 0.52);
+        font-size: 0.9rem;
+        line-height: 1.55;
       }
 
       .feedback-layout,
@@ -382,6 +475,20 @@
           max-width: none;
         }
 
+        .stats-card-header,
+        .subject-stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stats-card-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .class-switcher {
+          justify-content: flex-start;
+        }
+
         .hero {
           gap: 2rem;
         }
@@ -479,7 +586,7 @@
                 <div class="bar-track"><div class="bar teal"></div></div>
               </div>
             </div>
-            <p class="score-status" id="leaderboard-status" role="status">Loading live 5P score...</p>
+            <p class="score-status" id="leaderboard-status" role="status">Loading live class scores...</p>
           </article>
         </div>
       </section>
@@ -493,14 +600,34 @@
           <div class="overview-grid">
             <article class="stat-card">
               <p>Total points</p>
-              <strong>1,200</strong>
+              <strong id="total-points">1,200</strong>
               <span>Combined points earned through participation, service and school events.</span>
             </article>
 
-            <article class="stat-card">
-              <p>Recent achievements</p>
-              <strong>18</strong>
-              <span>Recognitions across leadership, collaboration, academic culture and service.</span>
+            <article class="stat-card stats-card">
+              <div class="stats-card-header">
+                <p id="class-stats-title">5P stats</p>
+                <div class="class-switcher" aria-label="Choose class stats">
+                  <button class="class-tab active" type="button" data-class="5P">5P</button>
+                  <button class="class-tab" type="button" data-class="5Q">5Q</button>
+                  <button class="class-tab" type="button" data-class="5R">5R</button>
+                  <button class="class-tab" type="button" data-class="5S">5S</button>
+                  <button class="class-tab" type="button" data-class="5T">5T</button>
+                </div>
+              </div>
+              <div class="subject-stats-grid">
+                <div class="subject-stat-panel">
+                  <h4>Scholastic</h4>
+                  <div class="subject-row"><span>Best at</span><strong id="scholastic-best">Loading</strong></div>
+                  <div class="subject-row"><span>Worst at</span><strong id="scholastic-worst">Loading</strong></div>
+                </div>
+                <div class="subject-stat-panel">
+                  <h4>Specialists</h4>
+                  <div class="subject-row"><span>Best at</span><strong id="specialist-best">Loading</strong></div>
+                  <div class="subject-row"><span>Worst at</span><strong id="specialist-worst">Loading</strong></div>
+                </div>
+              </div>
+              <p class="stats-note">Based on each selected class's weekly subject rows. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
             </article>
           </div>
         </div>
@@ -537,54 +664,115 @@
 
     <script>
       (function () {
-        const GOOGLE_SHEET_ID = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
-        const SCORE_CELLS = [
+        const CLASS_SHEETS = {
+          '5P': '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU',
+          '5Q': '1LWxHe9mN_BjHU0dLBpx_SP-RRZN-ZPwYX1Xxrsh9QYE',
+          '5R': '1oXFDyqIhkome0DF9HK34dPz89Q6tVcbyWVY1HhGIzls',
+          '5S': '113A-8_ges9lMoI3EeKkbkDP5JXl--9CoWNqc2Oi5s98',
+          '5T': '155GLWqjkCTKNJS1lmhUNnkFu7-tcCnU3N_0zWVUueGI'
+        };
+        const TOTAL_SCORE_RANGES = [
           { sheet: 'Scholastic', range: 'F7' },
           { sheet: 'Specialists', range: 'H7' }
         ];
+        const SUBJECT_SCORE_RANGES = {
+          scholastic: { sheet: 'Scholastic', range: 'B1:E6' },
+          specialist: { sheet: 'Specialists', range: 'B1:G6' }
+        };
         const REQUEST_TIMEOUT_MS = 8000;
 
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
-        const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
-        const fivePScore = document.getElementById('five-p-score');
         const leaderboardStatus = document.getElementById('leaderboard-status');
+        const totalPoints = document.getElementById('total-points');
+        const classStatsTitle = document.getElementById('class-stats-title');
+        const scholasticBest = document.getElementById('scholastic-best');
+        const scholasticWorst = document.getElementById('scholastic-worst');
+        const specialistBest = document.getElementById('specialist-best');
+        const specialistWorst = document.getElementById('specialist-worst');
+        const classTabs = Array.from(document.querySelectorAll('.class-tab'));
+        let selectedClass = '5P';
+        const classStats = {};
 
-        function updateLeader() {
-          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
-          const topEntry = entries.reduce((best, entry) => {
-            const points = Number(entry.dataset.points || 0);
-            const bestPoints = best ? Number(best.dataset.points || 0) : 0;
-            return !best || points > bestPoints ? entry : best;
-          }, null);
+        function parseCsvRows(csvText) {
+          const rows = [];
+          let row = [];
+          let value = '';
+          let isQuoted = false;
 
-          if (topEntry) {
-            leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+          for (let index = 0; index < csvText.length; index += 1) {
+            const character = csvText[index];
+            const nextCharacter = csvText[index + 1];
+
+            if (character === '"' && isQuoted && nextCharacter === '"') {
+              value += '"';
+              index += 1;
+            } else if (character === '"') {
+              isQuoted = !isQuoted;
+            } else if (character === ',' && !isQuoted) {
+              row.push(value.trim());
+              value = '';
+            } else if ((character === '\n' || character === '\r') && !isQuoted) {
+              if (character === '\r' && nextCharacter === '\n') {
+                index += 1;
+              }
+
+              row.push(value.trim());
+              rows.push(row);
+              row = [];
+              value = '';
+            } else {
+              value += character;
+            }
           }
+
+          if (value || row.length) {
+            row.push(value.trim());
+            rows.push(row);
+          }
+
+          return rows.filter((csvRow) => csvRow.some(Boolean));
         }
 
-        function parseSingleCellCsv(csvText, label) {
-          const trimmed = csvText.trim();
-          const value = trimmed.startsWith('"') && trimmed.endsWith('"')
-            ? trimmed.slice(1, -1).replace(/""/g, '"')
-            : trimmed;
-          const number = Number(value.replace(/,/g, ''));
+        function parseNumber(value, label) {
+          const number = Number(String(value).replace(/,/g, ''));
 
-          if (value === '' || !Number.isFinite(number)) {
+          if (String(value).trim() === '' || !Number.isFinite(number)) {
             throw new Error(`${label} is not a number.`);
           }
 
           return number;
         }
 
-        function buildGoogleSheetsCsvUrl(sheetName, range) {
+        function parseSingleCellCsv(csvText, label) {
+          const rows = parseCsvRows(csvText);
+          const value = rows[0] && rows[0][0];
+          return parseNumber(value, label);
+        }
+
+        function parseSubjectScoresCsv(csvText, label) {
+          const rows = parseCsvRows(csvText);
+          const headers = rows[0] || [];
+          const scoreRows = rows.slice(1);
+
+          if (!headers.length || !scoreRows.length) {
+            throw new Error(`${label} has no subject rows.`);
+          }
+
+          return headers.reduce((subjects, subject, columnIndex) => {
+            subjects[subject] = scoreRows.map((row, rowIndex) => parseNumber(row[columnIndex], `${label} ${subject} row ${rowIndex + 1}`));
+            return subjects;
+          }, {});
+        }
+
+        function buildGoogleSheetsCsvUrl(sheetId, sheetName, range) {
           const params = new URLSearchParams({
             tqx: 'out:csv',
             sheet: sheetName,
             range
           });
 
-          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(GOOGLE_SHEET_ID)}/gviz/tq?${params.toString()}`;
+          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
         }
 
         async function fetchWithTimeout(url) {
@@ -603,34 +791,184 @@
           }
         }
 
-        async function readGoogleSheetCell({ sheet, range }) {
-          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheet, range));
+        async function readGoogleSheetRange(className, { sheet, range }) {
+          const sheetId = CLASS_SHEETS[className];
+          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheetId, sheet, range));
 
           if (!response.ok) {
-            throw new Error(`${sheet}!${range} cannot be read.`);
+            throw new Error(`${className} ${sheet}!${range} cannot be read.`);
           }
 
-          return parseSingleCellCsv(await response.text(), `${sheet}!${range}`);
+          return response.text();
         }
 
-        async function loadFivePScore() {
+        async function readGoogleSheetCell(className, scoreRange) {
+          const csvText = await readGoogleSheetRange(className, scoreRange);
+          return parseSingleCellCsv(csvText, `${className} ${scoreRange.sheet}!${scoreRange.range}`);
+        }
+
+        async function readClassSubjectStats(className) {
+          const [scholasticCsv, specialistCsv] = await Promise.all([
+            readGoogleSheetRange(className, SUBJECT_SCORE_RANGES.scholastic),
+            readGoogleSheetRange(className, SUBJECT_SCORE_RANGES.specialist)
+          ]);
+
+          return {
+            scholastic: parseSubjectScoresCsv(scholasticCsv, `${className} scholastic`),
+            specialist: parseSubjectScoresCsv(specialistCsv, `${className} specialists`)
+          };
+        }
+
+        function getSubjectSummary(subjects) {
+          const totals = Object.entries(subjects).map(([subject, rows]) => ({
+            subject,
+            total: rows.reduce((sum, points) => sum + points, 0)
+          }));
+          const best = totals.reduce((winner, current) => current.total > winner.total ? current : winner, totals[0]);
+          const worst = totals.reduce((lowest, current) => current.total < lowest.total ? current : lowest, totals[0]);
+
+          return { best, worst };
+        }
+
+        function renderSubjectResult(element, result) {
+          if (element && result) {
+            element.textContent = `${result.subject} (${result.total} pts)`;
+          }
+        }
+
+        function renderStatsLoading(className) {
+          classStatsTitle.textContent = `${className} stats`;
+          scholasticBest.textContent = 'Loading';
+          scholasticWorst.textContent = 'Loading';
+          specialistBest.textContent = 'Loading';
+          specialistWorst.textContent = 'Loading';
+        }
+
+        function renderStatsError() {
+          scholasticBest.textContent = 'Unavailable';
+          scholasticWorst.textContent = 'Unavailable';
+          specialistBest.textContent = 'Unavailable';
+          specialistWorst.textContent = 'Unavailable';
+        }
+
+        function updateClassStats(className) {
+          const stats = classStats[className];
+          selectedClass = className;
+          classStatsTitle.textContent = `${className} stats`;
+
+          classTabs.forEach((tab) => {
+            const isActive = tab.dataset.class === className;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-pressed', String(isActive));
+          });
+
+          if (!stats) {
+            renderStatsLoading(className);
+            loadClassStats(className);
+            return;
+          }
+
+          const scholastic = getSubjectSummary(stats.scholastic);
+          const specialist = getSubjectSummary(stats.specialist);
+
+          renderSubjectResult(scholasticBest, scholastic.best);
+          renderSubjectResult(scholasticWorst, scholastic.worst);
+          renderSubjectResult(specialistBest, specialist.best);
+          renderSubjectResult(specialistWorst, specialist.worst);
+        }
+
+        async function loadClassStats(className) {
           try {
-            const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
-            const total = scores.reduce((sum, score) => sum + score, 0);
+            classStats[className] = await readClassSubjectStats(className);
 
-            fivePEntry.dataset.points = String(total);
-            fivePScore.textContent = `${total} pts`;
-            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
+            if (selectedClass === className) {
+              updateClassStats(className);
+            }
           } catch (error) {
-            fivePScore.textContent = 'Error';
-            leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
-          } finally {
-            updateLeader();
+            if (selectedClass === className) {
+              renderStatsError();
+            }
           }
         }
 
-        updateLeader();
-        loadFivePScore();
+        function getEntryPoints(entry) {
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
+
+        function formatPoints(points) {
+          return `${points.toLocaleString()} pts`;
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+          const sortedEntries = entries.sort((current, next) => getEntryPoints(next) - getEntryPoints(current));
+          const highestPoints = Math.max(...sortedEntries.map(getEntryPoints), 0);
+          const combinedPoints = sortedEntries.reduce((sum, entry) => sum + getEntryPoints(entry), 0);
+
+          sortedEntries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = highestPoints > 0 ? (points / highestPoints) * 100 : 0;
+            const scoreLabel = entry.querySelector('.bar-label span:last-child');
+            const bar = entry.querySelector('.bar');
+
+            if (scoreLabel) {
+              scoreLabel.textContent = formatPoints(points);
+            }
+
+            if (bar) {
+              bar.style.width = `${percentage}%`;
+              bar.setAttribute('aria-label', `${entry.dataset.house} has ${Math.round(percentage)}% of the leading score`);
+            }
+
+            leaderboard.appendChild(entry);
+          });
+
+          const topEntry = sortedEntries[0];
+
+          if (topEntry) {
+            leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+          }
+
+          if (totalPoints) {
+            totalPoints.textContent = combinedPoints.toLocaleString();
+          }
+        }
+
+        async function loadClassScores() {
+          const scoreLoads = Object.keys(CLASS_SHEETS).map(async (className) => {
+            const scores = await Promise.all(TOTAL_SCORE_RANGES.map((scoreRange) => readGoogleSheetCell(className, scoreRange)));
+            const total = scores.reduce((sum, score) => sum + score, 0);
+            const entry = leaderboard.querySelector(`[data-house="${className}"]`);
+
+            if (entry) {
+              entry.dataset.points = String(total);
+            }
+
+            return className;
+          });
+
+          const results = await Promise.allSettled(scoreLoads);
+          const loadedCount = results.filter((result) => result.status === 'fulfilled').length;
+
+          if (loadedCount === results.length) {
+            leaderboardStatus.textContent = 'Live scores loaded from Google Sheets.';
+          } else if (loadedCount > 0) {
+            leaderboardStatus.textContent = `${loadedCount} of ${results.length} live scores loaded from Google Sheets.`;
+          } else {
+            leaderboardStatus.textContent = 'Unable to load live scores from Google Sheets.';
+          }
+
+          updateLeaderboard();
+        }
+
+        classTabs.forEach((tab) => {
+          tab.addEventListener('click', () => updateClassStats(tab.dataset.class));
+        });
+
+        updateClassStats('5P');
+        updateLeaderboard();
+        loadClassScores();
       })();
     </script>
   </body>
