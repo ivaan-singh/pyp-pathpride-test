@@ -560,7 +560,7 @@
             <div class="standings-header">
               <div>
                 <p class="muted">Overall class standings</p>
-                <h3 id="leading-house" aria-live="polite">Loading...</h3>
+                <h3 id="leading-house">Loading...</h3>
               </div>
               <span class="live-pill">Live view</span>
             </div>
@@ -864,11 +864,6 @@
           selectedClass = className;
           updateActiveClassTab(className);
 
-
-        function updateClassStats(className) {
-          selectedClass = className;
-          updateActiveClassTab(className);
-
           if (classStats[className]) {
             renderClassStats(className);
             return;
@@ -906,46 +901,12 @@
         }
 
         function getEntryPoints(entry) {
-          if (!entry.dataset.points || entry.dataset.points.trim() === '') {
-            return null;
-          }
-
           const points = Number(entry.dataset.points);
           return Number.isFinite(points) ? points : null;
         }
 
         function formatPoints(points) {
           return Number.isFinite(points) ? `${points.toLocaleString()} pts` : 'Unavailable';
-        }
-
-        function formatLeadingMessage(sortedEntries) {
-          const loadedEntries = sortedEntries.filter((entry) => getEntryPoints(entry) !== null);
-
-          if (!loadedEntries.length) {
-            return 'Loading...';
-          }
-
-          const highestPoints = getEntryPoints(loadedEntries[0]);
-          const tiedEntries = loadedEntries.filter((entry) => getEntryPoints(entry) === highestPoints);
-          const allTeamsAreLoaded = loadedEntries.length === Object.keys(CLASS_SHEETS).length;
-
-          if (tiedEntries.length === 1) {
-            return `${tiedEntries[0].dataset.house} leads`;
-          }
-
-          if (allTeamsAreLoaded && tiedEntries.length === loadedEntries.length) {
-            return 'All teams are tied on the leaderboard';
-          if (tiedEntries.length === Object.keys(CLASS_SHEETS).length) {
-            return 'All teams are tied';
-            return 'Everybody is tied';
-          }
-
-          if (tiedEntries.length === 2) {
-            return `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
-          }
-
-          return `${tiedEntries.length} teams are tied`;
-          return `${tiedEntries.length} sections are tied`;
         }
 
         function updateLeaderboard() {
@@ -973,7 +934,6 @@
             leaderboard.appendChild(entry);
           });
 
-          leadingHouse.textContent = formatLeadingMessage(sortedEntries);
           const topEntry = sortedEntries.find((entry) => getEntryPoints(entry) !== null);
           leadingHouse.textContent = topEntry ? `${topEntry.dataset.house} leads` : 'Loading...';
           totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
