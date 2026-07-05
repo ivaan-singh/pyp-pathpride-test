@@ -248,11 +248,11 @@
         line-height: 1.5;
       }
 
-      .gold { width: 92%; background: #f2c94c; }
-      .blue { width: 84%; background: #8ec5ff; }
-      .purple { width: 79%; background: #a78bfa; }
-      .green { width: 69%; background: #6ee7b7; }
-      .teal { width: 65%; background: #5eead4; }
+      .gold { background: #f2c94c; }
+      .blue { background: #8ec5ff; }
+      .purple { background: #a78bfa; }
+      .green { background: #6ee7b7; }
+      .teal { background: #5eead4; }
 
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
@@ -459,23 +459,23 @@
             </div>
             <div class="bar-group" id="leaderboard">
               <div data-house="5S" data-points="340">
-                <div class="bar-label"><span>5S</span><span>340 pts</span></div>
+                <div class="bar-label"><span>5S</span><span data-points-label>340 pts</span></div>
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
               <div data-house="5P" data-points="0">
-                <div class="bar-label"><span>5P</span><span id="five-p-score">Loading...</span></div>
+                <div class="bar-label"><span>5P</span><span id="five-p-score" data-points-label>Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
               </div>
               <div data-house="5Q" data-points="295">
-                <div class="bar-label"><span>5Q</span><span>295 pts</span></div>
+                <div class="bar-label"><span>5Q</span><span data-points-label>295 pts</span></div>
                 <div class="bar-track"><div class="bar purple"></div></div>
               </div>
               <div data-house="5R" data-points="255">
-                <div class="bar-label"><span>5R</span><span>255 pts</span></div>
+                <div class="bar-label"><span>5R</span><span data-points-label>255 pts</span></div>
                 <div class="bar-track"><div class="bar green"></div></div>
               </div>
               <div data-house="5T" data-points="240">
-                <div class="bar-label"><span>5T</span><span>240 pts</span></div>
+                <div class="bar-label"><span>5T</span><span data-points-label>240 pts</span></div>
                 <div class="bar-track"><div class="bar teal"></div></div>
               </div>
             </div>
@@ -536,372 +536,58 @@
     </main>
 
     <script>
-      var PathPrideLiveLeaderboard = {
-        sheetId: '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU',
-        fallbackTimer: null,
-        score: 0
-      };
-
-      PathPrideLiveLeaderboard.leaderboard = document.getElementById('leaderboard');
-      PathPrideLiveLeaderboard.leadingHouse = document.getElementById('leading-house');
-      PathPrideLiveLeaderboard.fivePEntry = PathPrideLiveLeaderboard.leaderboard.querySelector('[data-house="5P"]');
-      PathPrideLiveLeaderboard.fivePScore = document.getElementById('five-p-score');
-      PathPrideLiveLeaderboard.status = document.getElementById('leaderboard-status');
-
-      PathPrideLiveLeaderboard.showError = function () {
-        window.clearTimeout(PathPrideLiveLeaderboard.fallbackTimer);
-        PathPrideLiveLeaderboard.fivePScore.textContent = 'Error';
-        PathPrideLiveLeaderboard.status.textContent = 'Could not load live 5P score.';
-        PathPrideLiveLeaderboard.updateLeader();
-      };
-
-      PathPrideLiveLeaderboard.updateLeader = function () {
-        var entries = Array.prototype.slice.call(PathPrideLiveLeaderboard.leaderboard.querySelectorAll('[data-house]'));
-        var topEntry = entries.reduce(function (best, entry) {
-          var points = Number(entry.getAttribute('data-points') || 0);
-          var bestPoints = best ? Number(best.getAttribute('data-points') || 0) : 0;
-          return !best || points > bestPoints ? entry : best;
-        }, null);
-
-        if (topEntry) {
-          PathPrideLiveLeaderboard.leadingHouse.textContent = topEntry.getAttribute('data-house') + ' leads';
-        }
-      };
-
-      PathPrideLiveLeaderboard.buildCellUrl = function (sheetName, cellAddress) {
-        var sheetId = PathPrideLiveLeaderboard.sheetId.trim();
-
-        if (!sheetId) {
-          throw new Error('Missing Google Sheet ID');
-        }
-
-        return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(sheetName) + '&range=' + encodeURIComponent(cellAddress);
-      };
-
-      PathPrideLiveLeaderboard.parseCellNumber = function (csvText) {
-        var value = csvText.trim();
-        var parsedNumber;
-
-        if (value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
-          value = value.slice(1, -1).replace(/""/g, '"');
-        }
-
-        parsedNumber = Number(value.replace(/,/g, ''));
-
-        if (value === '' || !Number.isFinite(parsedNumber)) {
-          throw new Error('Cell value is not a number');
-        }
-
-        return parsedNumber;
-      };
-
-      PathPrideLiveLeaderboard.fetchCellNumber = function (sheetName, cellAddress) {
-        var controller = window.AbortController ? new AbortController() : null;
-        var fetchOptions = { method: 'GET', cache: 'no-store' };
-        var timeoutId;
-
-        if (controller) {
-          fetchOptions.signal = controller.signal;
-        }
-
-        timeoutId = window.setTimeout(function () {
-          if (controller) {
-            controller.abort();
-          }
-        }, 8000);
-
-        return fetch(PathPrideLiveLeaderboard.buildCellUrl(sheetName, cellAddress), fetchOptions)
-          .then(function (response) {
-            window.clearTimeout(timeoutId);
-
-            if (!response.ok) {
-              throw new Error('Google Sheets request failed');
-            }
-
-            return response.text();
-          })
-          .then(function (csvText) {
-            var cellNumber = PathPrideLiveLeaderboard.parseCellNumber(csvText);
-            return cellNumber;
-          });
-      };
-
-      PathPrideLiveLeaderboard.loadFivePScore = function () {
-        var scholasticScore = 0;
-        var specialistsScore = 0;
-        var totalScore = 0;
-
-        PathPrideLiveLeaderboard.fallbackTimer = window.setTimeout(PathPrideLiveLeaderboard.showError, 10000);
-
-        PathPrideLiveLeaderboard.fetchCellNumber('Scholastic', 'F7')
-          .then(function (cellNumber) {
-            scholasticScore = cellNumber;
-            return PathPrideLiveLeaderboard.fetchCellNumber('Specialists', 'H7');
-          })
-          .then(function (cellNumber) {
-            specialistsScore = cellNumber;
-            totalScore = scholasticScore + specialistsScore;
-            PathPrideLiveLeaderboard.score = totalScore;
-            PathPrideLiveLeaderboard.fivePEntry.setAttribute('data-points', String(totalScore));
-            PathPrideLiveLeaderboard.fivePScore.textContent = totalScore + ' pts';
-            PathPrideLiveLeaderboard.status.textContent = 'Live 5P score loaded from Google Sheets.';
-            window.clearTimeout(PathPrideLiveLeaderboard.fallbackTimer);
-            PathPrideLiveLeaderboard.updateLeader();
-          })
-          .catch(function () {
-            PathPrideLiveLeaderboard.showError();
-          });
-      };
-
-      PathPrideLiveLeaderboard.updateLeader();
-      PathPrideLiveLeaderboard.loadFivePScore();
-      var pathPrideGoogleSheetId = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
-      var pathPrideLeaderboard = document.getElementById('leaderboard');
-      var pathPrideLeadingHouse = document.getElementById('leading-house');
-      var pathPrideFivePEntry = pathPrideLeaderboard.querySelector('[data-house="5P"]');
-      var pathPrideFivePScore = document.getElementById('five-p-score');
-      var pathPrideLeaderboardStatus = document.getElementById('leaderboard-status');
-      var pathPrideLoadingFallbackId = window.setTimeout(pathPrideShowLoadError, 10000);
-
-      function pathPrideShowLoadError() {
-        window.clearTimeout(pathPrideLoadingFallbackId);
-        pathPrideFivePScore.textContent = 'Error';
-        pathPrideLeaderboardStatus.textContent = 'Could not load live 5P score.';
-        pathPrideUpdateLeader();
-      }
-
-      function pathPrideUpdateLeader() {
-        var entries = Array.prototype.slice.call(pathPrideLeaderboard.querySelectorAll('[data-house]'));
-        var topEntry = entries.reduce(function (best, entry) {
-          var points = Number(entry.dataset.points || 0);
       (function () {
-        var googleSheetId = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
-        var leaderboard = document.getElementById('leaderboard');
-        var leadingHouse = document.getElementById('leading-house');
-        var fivePEntry = leaderboard.querySelector('[data-house="5P"]');
-        var fivePScore = document.getElementById('five-p-score');
-        var leaderboardStatus = document.getElementById('leaderboard-status');
-        var loadingFallbackId = window.setTimeout(showLoadError, 10000);
+        const GOOGLE_SHEET_ID = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
+        const SCORE_CELLS = [
+          { sheet: 'Scholastic', range: 'F7' },
+          { sheet: 'Specialists', range: 'H7' }
+        ];
+        const REQUEST_TIMEOUT_MS = 8000;
+        const MAX_SCORE = 10 * 50 * 40;
 
-        function showLoadError() {
-          window.clearTimeout(loadingFallbackId);
-
-        function showLoadError() {
-          fivePScore.textContent = 'Error';
-          leaderboardStatus.textContent = 'Could not load live 5P score.';
-          updateLeader();
-        }
-
-        function updateLeader() {
-          var entries = Array.prototype.slice.call(leaderboard.querySelectorAll('[data-house]'));
-          var topEntry = entries.reduce(function (best, entry) {
-            var points = Number(entry.dataset.points || 0);
-            return !best || points > Number(best.dataset.points || 0) ? entry : best;
-          }, null);
-
-          if (topEntry) {
-            leadingHouse.textContent = topEntry.dataset.house + ' leads';
-          }
-        }
-
-        function parseSingleCellCsv(csvText) {
-          var trimmed = csvText.trim();
-          var value = trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"'
-            ? trimmed.slice(1, -1).replace(/""/g, '"')
-            : trimmed;
-          var number = Number(value.replace(/,/g, ''));
-
-          if (value === '' || !Number.isFinite(number)) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          return number;
-        }
-
-        function buildGoogleSheetsCsvUrl(sheetName, address) {
-          var sheetId = googleSheetId.trim();
-          var params;
-
-          if (!sheetId) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          params = new URLSearchParams({
-            tqx: 'out:csv',
-            sheet: sheetName,
-            range: address
-          });
-
-          return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?' + params.toString();
-        }
-
-        function fetchGoogleSheetCellValue(sheetName, address) {
-          var timeoutId;
-          var timeoutPromise = new Promise(function (resolve, reject) {
-            timeoutId = window.setTimeout(function () {
-              reject(new Error('Could not load live 5P score.'));
-            }, 8000);
-          });
-          var cellPromise = fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
-            method: 'GET',
-            headers: { Accept: 'text/csv,text/plain,*/*' },
-            redirect: 'follow'
-          }).then(function (response) {
-            if (!response.ok) {
-              throw new Error('Could not load live 5P score.');
-            }
-
-            return response.text();
-          }).then(function (csvText) {
-            return parseSingleCellCsv(csvText);
-          });
-
-          return Promise.race([cellPromise, timeoutPromise]).then(function (number) {
-            window.clearTimeout(timeoutId);
-            return number;
-          }, function (error) {
-            window.clearTimeout(timeoutId);
-            throw error;
-          });
-        }
-
-        function get5PScoreFromGoogleSheet() {
-          return Promise.all([
-            fetchGoogleSheetCellValue('Scholastic', 'F7'),
-            fetchGoogleSheetCellValue('Specialists', 'H7')
-          ]).then(function (scores) {
-            return scores[0] + scores[1];
-          });
-        }
-
-        function loadFivePScore() {
-          Promise.resolve().then(get5PScoreFromGoogleSheet).then(function (total) {
-            fivePEntry.dataset.points = String(total);
-            fivePScore.textContent = total + ' pts';
-            window.clearTimeout(loadingFallbackId);
-            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-            updateLeader();
-          }).catch(showLoadError);
-        }
-
-        updateLeader();
-        loadFivePScore();
-      })();
-
-        function updateLeader() {
-          var entries = Array.prototype.slice.call(leaderboard.querySelectorAll('[data-house]'));
-          var topEntry = entries.reduce(function (best, entry) {
-            var points = Number(entry.dataset.points || 0);
-            return !best || points > Number(best.dataset.points || 0) ? entry : best;
-          }, null);
-
-          if (topEntry) {
-            leadingHouse.textContent = topEntry.dataset.house + ' leads';
-          }
-        }
-
-        function parseSingleCellCsv(csvText) {
-          var trimmed = csvText.trim();
-          var value = trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"'
-            ? trimmed.slice(1, -1).replace(/""/g, '"')
-            : trimmed;
-          var number = Number(value.replace(/,/g, ''));
-
-          if (value === '' || !Number.isFinite(number)) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          return number;
-        }
-
-        function buildGoogleSheetsCsvUrl(sheetName, address) {
-          var sheetId = googleSheetId.trim();
-          var params;
-
-          if (!sheetId) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          params = new URLSearchParams({
-            tqx: 'out:csv',
-            sheet: sheetName,
-            range: address
-          });
-
-          return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?' + params.toString();
-        }
-
-        function fetchGoogleSheetCellValue(sheetName, address) {
-          var timeoutId;
-          var timeoutPromise = new Promise(function (resolve, reject) {
-            timeoutId = window.setTimeout(function () {
-              reject(new Error('Could not load live 5P score.'));
-            }, 8000);
-          });
-          var cellPromise = fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
-            method: 'GET',
-            headers: { Accept: 'text/csv,text/plain,*/*' },
-            redirect: 'follow'
-          }).then(function (response) {
-            if (!response.ok) {
-              throw new Error('Could not load live 5P score.');
-            }
-
-            return response.text();
-          }).then(function (csvText) {
-            return parseSingleCellCsv(csvText);
-          });
-
-          return Promise.race([cellPromise, timeoutPromise]).then(function (number) {
-            window.clearTimeout(timeoutId);
-            return number;
-          }, function (error) {
-            window.clearTimeout(timeoutId);
-            throw error;
-          });
-        }
-
-        function get5PScoreFromGoogleSheet() {
-          return Promise.all([
-            fetchGoogleSheetCellValue('Scholastic', 'F7'),
-            fetchGoogleSheetCellValue('Specialists', 'H7')
-          ]).then(function (scores) {
-            return scores[0] + scores[1];
-          });
-        }
-
-        function loadFivePScore() {
-          Promise.resolve().then(get5PScoreFromGoogleSheet).then(function (total) {
-            fivePEntry.dataset.points = String(total);
-            fivePScore.textContent = total + ' pts';
-            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-            updateLeader();
-          }).catch(showLoadError);
-        }
-
-        updateLeader();
-        loadFivePScore();
-      })();
-        const VITE_GOOGLE_SHEET_ID = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
         const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
         const fivePScore = document.getElementById('five-p-score');
         const leaderboardStatus = document.getElementById('leaderboard-status');
 
-        function updateLeader() {
-          const entries = [...leaderboard.querySelectorAll('[data-house]')];
-          const topEntry = entries.reduce((best, entry) => {
-            const points = Number(entry.dataset.points || 0);
-            return !best || points > Number(best.dataset.points || 0) ? entry : best;
-          }, null);
+        function getEntryPoints(entry) {
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
 
+        function scoreToPercent(points) {
+          return Math.max(0, Math.min(100, (points / MAX_SCORE) * 100));
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+
+          entries
+            .sort((entryA, entryB) => getEntryPoints(entryB) - getEntryPoints(entryA))
+            .forEach((entry) => {
+              const points = getEntryPoints(entry);
+              const pointsLabel = entry.querySelector('[data-points-label]');
+              const bar = entry.querySelector('.bar');
+
+              if (pointsLabel && pointsLabel.id !== 'five-p-score') {
+                pointsLabel.textContent = `${points} pts`;
+              }
+
+              if (bar) {
+                bar.style.width = `${scoreToPercent(points)}%`;
+              }
+
+              leaderboard.appendChild(entry);
+            });
+
+          const topEntry = entries[0];
           if (topEntry) {
             leadingHouse.textContent = `${topEntry.dataset.house} leads`;
           }
         }
 
-        function parseSingleCellCsv(csvText) {
+        function parseSingleCellCsv(csvText, label) {
           const trimmed = csvText.trim();
           const value = trimmed.startsWith('"') && trimmed.endsWith('"')
             ? trimmed.slice(1, -1).replace(/""/g, '"')
@@ -909,376 +595,67 @@
           const number = Number(value.replace(/,/g, ''));
 
           if (value === '' || !Number.isFinite(number)) {
-            throw new Error('Could not load live 5P score.');
+            throw new Error(`${label} is not a number.`);
           }
 
           return number;
         }
 
-        function buildGoogleSheetsCsvUrl(sheetName, address) {
-          const sheetId = VITE_GOOGLE_SHEET_ID.trim();
-          if (!sheetId) {
-            throw new Error('Could not load live 5P score.');
-          }
-
+        function buildGoogleSheetsCsvUrl(sheetName, range) {
           const params = new URLSearchParams({
             tqx: 'out:csv',
             sheet: sheetName,
-            range: address
+            range
           });
 
-          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
+          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(GOOGLE_SHEET_ID)}/gviz/tq?${params.toString()}`;
         }
 
-        async function fetchGoogleSheetCellValue(sheetName, address) {
+        async function fetchWithTimeout(url) {
           const controller = new AbortController();
-          const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+          const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
           try {
-            const response = await fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
-              method: 'GET',
+            return await fetch(url, {
+              cache: 'no-store',
               headers: { Accept: 'text/csv,text/plain,*/*' },
               redirect: 'follow',
               signal: controller.signal
             });
-
-            if (!response.ok) {
-              throw new Error('Could not load live 5P score.');
-            }
-
-            return parseSingleCellCsv(await response.text());
           } finally {
             window.clearTimeout(timeoutId);
           }
         }
 
-        async function get5PScoreFromGoogleSheet() {
-          const [scholastic, specialists] = await Promise.all([
-            fetchGoogleSheetCellValue('Scholastic', 'F7'),
-            fetchGoogleSheetCellValue('Specialists', 'H7')
-          ]);
+        async function readGoogleSheetCell({ sheet, range }) {
+          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheet, range));
 
-          return scholastic + specialists;
+          if (!response.ok) {
+            throw new Error(`${sheet}!${range} cannot be read.`);
+          }
+
+          return parseSingleCellCsv(await response.text(), `${sheet}!${range}`);
         }
 
         async function loadFivePScore() {
           try {
-            const total = await get5PScoreFromGoogleSheet();
+            const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
+            const total = scores.reduce((sum, score) => sum + score, 0);
+
             fivePEntry.dataset.points = String(total);
             fivePScore.textContent = `${total} pts`;
             leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-            updateLeader();
           } catch (error) {
             fivePScore.textContent = 'Error';
-            leaderboardStatus.textContent = 'Could not load live 5P score.';
-            updateLeader();
-          }
-        }
-
-        updateLeader();
-        loadFivePScore();
-      })();
-
-        function parseSingleCellCsv(csvText) {
-          const trimmed = csvText.trim();
-          const value = trimmed.startsWith('"') && trimmed.endsWith('"')
-            ? trimmed.slice(1, -1).replace(/""/g, '"')
-            : trimmed;
-          const number = Number(value.replace(/,/g, ''));
-
-          if (value === '' || !Number.isFinite(number)) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          return number;
-        }
-
-        function buildGoogleSheetsCsvUrl(sheetName, address) {
-          const sheetId = VITE_GOOGLE_SHEET_ID.trim();
-          if (!sheetId) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          const params = new URLSearchParams({
-            tqx: 'out:csv',
-            sheet: sheetName,
-            range: address
-          });
-
-          return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
-        }
-
-        async function readGoogleSheetCell(sheetName, address) {
-          const controller = new AbortController();
-          const timeoutId = window.setTimeout(() => controller.abort(), 8000);
-
-          try {
-            const response = await fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
-              method: 'GET',
-              headers: { Accept: 'text/csv,text/plain,*/*' },
-              redirect: 'follow',
-              signal: controller.signal
-            });
-
-            if (!response.ok) {
-              throw new Error('Could not load live 5P score.');
-            }
-
-            return parseSingleCellCsv(await response.text());
+            leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
           } finally {
-            window.clearTimeout(timeoutId);
+            updateLeaderboard();
           }
         }
 
-        async function get5PScoreFromGoogleSheet() {
-          const [scholastic, specialists] = await Promise.all([
-            readGoogleSheetCell('Scholastic', 'F7'),
-            readGoogleSheetCell('Specialists', 'H7')
-          ]);
-
-          return scholastic + specialists;
-        }
-
-        async function loadFivePScore() {
-          try {
-            const total = await get5PScoreFromGoogleSheet();
-            fivePEntry.dataset.points = String(total);
-            fivePScore.textContent = `${total} pts`;
-            leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-            updateLeader();
-          } catch (error) {
-            fivePScore.textContent = 'Error';
-            leaderboardStatus.textContent = 'Could not load live 5P score.';
-            updateLeader();
-          }
-        }
-
-        updateLeader();
+        updateLeaderboard();
         loadFivePScore();
       })();
-      const VITE_GOOGLE_SHEET_ID = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
-      const leaderboard = document.getElementById('leaderboard');
-      const leadingHouse = document.getElementById('leading-house');
-      const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
-      const fivePScore = document.getElementById('five-p-score');
-      const leaderboardStatus = document.getElementById('leaderboard-status');
-
-      function updateLeader() {
-        const entries = [...leaderboard.querySelectorAll('[data-house]')];
-        const topEntry = entries.reduce((best, entry) => {
-          const points = Number(entry.dataset.points || 0);
-          return !best || points > Number(best.dataset.points || 0) ? entry : best;
-        }, null);
-
-        if (topEntry) {
-          pathPrideLeadingHouse.textContent = topEntry.dataset.house + ' leads';
-        }
-      }
-
-      function pathPrideParseSingleCellCsv(csvText) {
-        var trimmed = csvText.trim();
-        var value = trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"'
-          ? trimmed.slice(1, -1).replace(/""/g, '"')
-          : trimmed;
-        var number = Number(value.replace(/,/g, ''));
-
-        if (value === '' || !Number.isFinite(number)) {
-          throw new Error('Could not load live 5P score.');
-        }
-
-        return number;
-      }
-
-      function pathPrideBuildGoogleSheetsCsvUrl(sheetName, address) {
-        var sheetId = pathPrideGoogleSheetId.trim();
-        var params;
-
-        if (!sheetId) {
-          throw new Error('Could not load live 5P score.');
-        }
-
-        params = new URLSearchParams({
-          tqx: 'out:csv',
-          sheet: sheetName,
-          range: address
-        });
-
-        return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?' + params.toString();
-      }
-
-      function pathPrideFetchGoogleSheetCellValue(sheetName, address) {
-        var timeoutId;
-        var timeoutPromise = new Promise(function (resolve, reject) {
-          timeoutId = window.setTimeout(function () {
-            reject(new Error('Could not load live 5P score.'));
-          }, 8000);
-        });
-        var cellPromise = fetch(pathPrideBuildGoogleSheetsCsvUrl(sheetName, address), {
-          method: 'GET',
-          headers: { Accept: 'text/csv,text/plain,*/*' },
-          redirect: 'follow'
-        }).then(function (response) {
-          if (!response.ok) {
-            throw new Error('Could not load live 5P score.');
-          }
-
-          return response.text();
-        }).then(function (csvText) {
-          return pathPrideParseSingleCellCsv(csvText);
-        });
-
-        return Promise.race([cellPromise, timeoutPromise]).then(function (number) {
-          window.clearTimeout(timeoutId);
-          return number;
-        }, function (error) {
-          window.clearTimeout(timeoutId);
-          throw error;
-        });
-      }
-
-      function pathPrideGet5PScoreFromGoogleSheet() {
-        return Promise.all([
-          pathPrideFetchGoogleSheetCellValue('Scholastic', 'F7'),
-          pathPrideFetchGoogleSheetCellValue('Specialists', 'H7')
-        ]).then(function (scores) {
-          return scores[0] + scores[1];
-        });
-      }
-
-      function pathPrideLoadFivePScore() {
-        Promise.resolve().then(pathPrideGet5PScoreFromGoogleSheet).then(function (total) {
-          pathPrideFivePEntry.dataset.points = String(total);
-          pathPrideFivePScore.textContent = total + ' pts';
-          window.clearTimeout(pathPrideLoadingFallbackId);
-          pathPrideLeaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-          pathPrideUpdateLeader();
-        }).catch(pathPrideShowLoadError);
-      }
-
-      pathPrideUpdateLeader();
-      pathPrideLoadFivePScore();
-          leadingHouse.textContent = `${topEntry.dataset.house} leads`;
-        }
-      }
-
-      function parseSingleCellCsv(csvText) {
-        const trimmed = csvText.trim();
-        const value = trimmed.startsWith('"') && trimmed.endsWith('"')
-          ? trimmed.slice(1, -1).replace(/""/g, '"')
-          : trimmed;
-        const number = Number(value.replace(/,/g, ''));
-
-        if (value === '' || !Number.isFinite(number)) {
-          throw new Error('Could not load live 5P score.');
-
-      function parseSingleCellCsv(csvText, label) {
-        const trimmed = csvText.trim();
-        const value = trimmed.startsWith('"') && trimmed.endsWith('"')
-          ? trimmed.slice(1, -1).replace(/""/g, '"')
-          : trimmed;
-        const number = Number(value.replace(/,/g, ''));
-
-        if (value === '' || !Number.isFinite(number)) {
-          throw new Error(`${label} is not a number.`);
-        }
-
-        return number;
-      }
-
-      function buildGoogleSheetsCsvUrl(sheetName, address) {
-        const sheetId = VITE_GOOGLE_SHEET_ID.trim();
-        if (!sheetId) {
-          throw new Error('Could not load live 5P score.');
-      async function readGoogleSheetCell(sheetName, address) {
-        const sheetId = VITE_GOOGLE_SHEET_ID.trim();
-        if (!sheetId) {
-          throw new Error('Google Sheet ID is missing.');
-        }
-
-        const params = new URLSearchParams({
-          tqx: 'out:csv',
-          sheet: sheetName,
-          range: address
-        });
-
-        return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?${params.toString()}`;
-      }
-
-      async function readGoogleSheetCell(sheetName, address) {
-        const response = await fetch(buildGoogleSheetsCsvUrl(sheetName, address), {
-          method: 'GET',
-          headers: { Accept: 'text/csv,text/plain,*/*' },
-          redirect: 'follow'
-        });
-
-        if (!response.ok) {
-          throw new Error('Could not load live 5P score.');
-        }
-
-        return parseSingleCellCsv(await response.text());
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?${params}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`${sheetName} sheet cannot be read.`);
-        }
-
-        return parseSingleCellCsv(await response.text(), `${sheetName}!${address}`);
-      }
-
-      async function get5PScoreFromGoogleSheet() {
-        const [scholastic, specialists] = await Promise.all([
-          readGoogleSheetCell('Scholastic', 'F7'),
-          readGoogleSheetCell('Specialists', 'H7')
-        ]);
-
-        return scholastic + specialists;
-      }
-
-      async function loadFivePScore() {
-        try {
-          const total = await get5PScoreFromGoogleSheet();
-          fivePEntry.dataset.points = String(total);
-          fivePScore.textContent = `${total} pts`;
-          leaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
-          updateLeader();
-        } catch (error) {
-          fivePScore.textContent = 'Error';
-          leaderboardStatus.textContent = 'Could not load live 5P score.';
-          leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
-          updateLeader();
-        }
-      }
-
-
-      async function loadFivePScore() {
-        try {
-          const response = await fetch('/api/leaderboard/5p', { headers: { Accept: 'application/json' } });
-          const payload = await response.json().catch(() => ({}));
-
-          if (!response.ok) {
-            throw new Error(payload.error || 'Backend request failed.');
-          }
-
-          const total = Number(payload.total);
-          if (!Number.isFinite(total)) {
-            throw new Error('Backend returned an invalid 5P score.');
-          }
-
-          fivePEntry.dataset.points = String(total);
-          fivePScore.textContent = `${total} pts`;
-          leaderboardStatus.textContent = `Live 5P score loaded from ${payload.section || '5P'}.`;
-          updateLeader();
-        } catch (error) {
-          fivePScore.textContent = 'Error';
-          leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
-          updateLeader();
-        }
-      }
-
-      updateLeader();
-      loadFivePScore();
-
     </script>
   </body>
 </html>
