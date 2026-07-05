@@ -732,6 +732,172 @@
           }
 
           return rows.filter((csvRow) => csvRow.some(Boolean));
+        const classStats = {
+          '5P': {
+            scholastic: {
+              English: [10, 9, 8, 10, 9],
+              Maths: [8, 8, 8, 8, 8],
+              Hindi: [9, 8, 9, 9, 10],
+              UOI: [7, 8, 10, 9, 10]
+            },
+            specialist: {
+              Music: [7, 8, 9, 8, 10],
+              Technology: [8, 9, 10, 8, 9],
+              'Physical Education': [10, 9, 8, 10, 9],
+              Dance: [6, 7, 8, 9, 8],
+              Drama: [7, 8, 9, 8, 10],
+              'Visual Art': [9, 8, 10, 9, 10]
+            }
+          },
+          '5Q': {
+            scholastic: {
+              English: [8, 9, 9, 8, 9],
+              Maths: [9, 10, 9, 10, 9],
+              Hindi: [8, 8, 9, 8, 8],
+              UOI: [9, 9, 10, 9, 10]
+            },
+            specialist: {
+              Music: [8, 8, 9, 9, 8],
+              Technology: [9, 9, 8, 9, 9],
+              'Physical Education': [8, 9, 9, 8, 9],
+              Dance: [7, 8, 7, 8, 8],
+              Drama: [8, 8, 8, 9, 8],
+              'Visual Art': [10, 9, 9, 10, 9]
+            }
+          },
+          '5R': {
+            scholastic: {
+              English: [8, 8, 9, 8, 8],
+              Maths: [7, 8, 8, 8, 9],
+              Hindi: [9, 9, 8, 9, 8],
+              UOI: [8, 8, 9, 8, 9]
+            },
+            specialist: {
+              Music: [9, 8, 8, 9, 8],
+              Technology: [7, 8, 8, 7, 8],
+              'Physical Education': [9, 10, 9, 9, 10],
+              Dance: [8, 8, 8, 7, 8],
+              Drama: [8, 7, 8, 8, 7],
+              'Visual Art': [9, 9, 8, 9, 8]
+            }
+          },
+          '5S': {
+            scholastic: {
+              English: [10, 10, 9, 10, 9],
+              Maths: [9, 9, 10, 9, 10],
+              Hindi: [9, 10, 9, 10, 9],
+              UOI: [10, 9, 10, 10, 9]
+            },
+            specialist: {
+              Music: [9, 10, 9, 10, 9],
+              Technology: [10, 9, 10, 9, 10],
+              'Physical Education': [10, 10, 10, 9, 10],
+              Dance: [8, 9, 9, 8, 9],
+              Drama: [9, 9, 10, 9, 10],
+              'Visual Art': [10, 10, 9, 10, 10]
+            }
+          },
+          '5T': {
+            scholastic: {
+              English: [8, 7, 8, 8, 9],
+              Maths: [8, 8, 7, 8, 8],
+              Hindi: [7, 8, 8, 7, 8],
+              UOI: [9, 8, 9, 8, 9]
+            },
+            specialist: {
+              Music: [8, 9, 8, 8, 9],
+              Technology: [8, 8, 9, 8, 8],
+              'Physical Education': [9, 9, 10, 9, 9],
+              Dance: [7, 7, 8, 7, 8],
+              Drama: [8, 8, 7, 8, 8],
+              'Visual Art': [9, 8, 9, 9, 8]
+            }
+          }
+        };
+
+
+        function getSubjectSummary(subjects) {
+          const totals = Object.entries(subjects).map(([subject, rows]) => ({
+            subject,
+            total: rows.reduce((sum, points) => sum + points, 0)
+          }));
+          const best = totals.reduce((winner, current) => current.total > winner.total ? current : winner, totals[0]);
+          const worst = totals.reduce((lowest, current) => current.total < lowest.total ? current : lowest, totals[0]);
+
+          return { best, worst };
+        }
+
+        function renderSubjectResult(element, result) {
+          if (element && result) {
+            element.textContent = `${result.subject} (${result.total} pts)`;
+          }
+        }
+
+        function updateClassStats(className) {
+          const stats = classStats[className];
+
+          if (!stats) {
+            return;
+          }
+
+          const scholastic = getSubjectSummary(stats.scholastic);
+          const specialist = getSubjectSummary(stats.specialist);
+
+          classStatsTitle.textContent = `${className} stats`;
+          renderSubjectResult(scholasticBest, scholastic.best);
+          renderSubjectResult(scholasticWorst, scholastic.worst);
+          renderSubjectResult(specialistBest, specialist.best);
+          renderSubjectResult(specialistWorst, specialist.worst);
+
+          classTabs.forEach((tab) => {
+            const isActive = tab.dataset.class === className;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-pressed', String(isActive));
+          });
+        }
+
+        function getEntryPoints(entry) {
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
+
+        function formatPoints(points) {
+          return `${points.toLocaleString()} pts`;
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+          const sortedEntries = entries.sort((current, next) => getEntryPoints(next) - getEntryPoints(current));
+          const highestPoints = Math.max(...sortedEntries.map(getEntryPoints), 0);
+          const combinedPoints = sortedEntries.reduce((sum, entry) => sum + getEntryPoints(entry), 0);
+
+          sortedEntries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = highestPoints > 0 ? (points / highestPoints) * 100 : 0;
+            const scoreLabel = entry.querySelector('.bar-label span:last-child');
+            const bar = entry.querySelector('.bar');
+
+            if (scoreLabel) {
+              scoreLabel.textContent = formatPoints(points);
+            }
+
+            if (bar) {
+              bar.style.width = `${percentage}%`;
+              bar.setAttribute('aria-label', `${entry.dataset.house} has ${Math.round(percentage)}% of the leading score`);
+            }
+
+            leaderboard.appendChild(entry);
+          });
+
+          const topEntry = sortedEntries[0];
+
+          if (topEntry) {
+            leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+          }
+
+          if (totalPoints) {
+            totalPoints.textContent = combinedPoints.toLocaleString();
+          }
         }
 
         function parseNumber(value, label) {
@@ -957,6 +1123,11 @@
             leaderboardStatus.textContent = `${loadedCount} of ${results.length} live scores loaded from Google Sheets.`;
           } else {
             leaderboardStatus.textContent = 'Unable to load live scores from Google Sheets.';
+            fivePScore.textContent = 'Error';
+            leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
+          } finally {
+            updateLeaderboard();
+
           }
 
           updateLeaderboard();
@@ -969,6 +1140,7 @@
         updateClassStats('5P');
         updateLeaderboard();
         loadClassScores();
+        loadFivePScore();
       })();
     </script>
   </body>
