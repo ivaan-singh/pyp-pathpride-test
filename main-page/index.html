@@ -960,6 +960,8 @@
           });
 
           leadingHouse.textContent = formatLeadingMessage(sortedEntries);
+          const topEntry = sortedEntries.find((entry) => getEntryPoints(entry) !== null);
+          leadingHouse.textContent = topEntry ? `${topEntry.dataset.house} leads` : 'Loading...';
           totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
         }
 
