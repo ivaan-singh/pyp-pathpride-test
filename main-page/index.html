@@ -463,6 +463,7 @@
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
               <div data-house="5P" data-points="">
+              <div data-house="5P" data-points="0">
                 <div class="bar-label"><span>5P</span><span id="five-p-score" data-score>Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
               </div>
@@ -543,6 +544,8 @@
           { sheet: 'Specialists', range: 'H7' }
         ];
         const REQUEST_TIMEOUT_MS = 8000;
+        const PERFECT_SCORE = 10 * 50 * 40;
+
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
         const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
@@ -569,6 +572,20 @@
 
         function formatPercentage(points, comparisonPoints) {
           return `${scorePercentage(points, comparisonPoints).toFixed(1)}%`;
+          const points = Number(entry.dataset.points || 0);
+          return Number.isFinite(points) ? points : 0;
+        }
+
+        function scorePercentage(points, highestPoints) {
+          if (highestPoints <= 0) {
+            return 0;
+          }
+
+          return Math.max(0, Math.min(100, (points / highestPoints) * 100));
+        }
+
+        function formatPercentage(points, highestPoints) {
+          return `${scorePercentage(points, highestPoints).toFixed(1)}%`;
         }
 
         function updateLeaderboard() {
@@ -580,6 +597,13 @@
           entries.forEach((entry) => {
             const points = getEntryPoints(entry);
             const percentage = formatPercentage(points, comparisonPoints);
+            .sort((a, b) => getEntryPoints(b) - getEntryPoints(a));
+          const topEntry = entries[0];
+          const highestPoints = topEntry ? getEntryPoints(topEntry) : 0;
+
+          entries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = formatPercentage(points, highestPoints);
             const bar = entry.querySelector('.bar');
             const score = entry.querySelector('[data-score]');
 
@@ -589,12 +613,44 @@
             }
 
             if (score && points !== null) {
+            if (score) {
               score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
             }
 
             leaderboard.appendChild(entry);
           });
+        function scorePercentage(points) {
+          return Math.max(0, Math.min(100, (points / PERFECT_SCORE) * 100));
+        }
 
+        function formatPercentage(points) {
+          return `${scorePercentage(points).toFixed(1)}%`;
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+
+          entries
+            .sort((a, b) => getEntryPoints(b) - getEntryPoints(a))
+            .forEach((entry) => {
+              const points = getEntryPoints(entry);
+              const percentage = formatPercentage(points);
+              const bar = entry.querySelector('.bar');
+              const score = entry.querySelector('[data-score]');
+
+              if (bar) {
+                bar.style.width = percentage;
+                bar.setAttribute('aria-label', `${entry.dataset.house} has ${percentage} of the ${PERFECT_SCORE} point goal`);
+              }
+
+              if (score) {
+                score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
+              }
+
+              leaderboard.appendChild(entry);
+            });
+
+          const topEntry = entries[0];
           if (topEntry) {
             leadingHouse.textContent = `${topEntry.dataset.house} leads`;
           }
