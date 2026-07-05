@@ -864,6 +864,11 @@
           selectedClass = className;
           updateActiveClassTab(className);
 
+
+        function updateClassStats(className) {
+          selectedClass = className;
+          updateActiveClassTab(className);
+
           if (classStats[className]) {
             renderClassStats(className);
             return;
@@ -930,6 +935,9 @@
 
           if (allTeamsAreLoaded && tiedEntries.length === loadedEntries.length) {
             return 'All teams are tied on the leaderboard';
+          if (tiedEntries.length === Object.keys(CLASS_SHEETS).length) {
+            return 'All teams are tied';
+            return 'Everybody is tied';
           }
 
           if (tiedEntries.length === 2) {
@@ -937,6 +945,7 @@
           }
 
           return `${tiedEntries.length} teams are tied`;
+          return `${tiedEntries.length} sections are tied`;
         }
 
         function updateLeaderboard() {
@@ -965,6 +974,8 @@
           });
 
           leadingHouse.textContent = formatLeadingMessage(sortedEntries);
+          const topEntry = sortedEntries.find((entry) => getEntryPoints(entry) !== null);
+          leadingHouse.textContent = topEntry ? `${topEntry.dataset.house} leads` : 'Loading...';
           totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
         }
 
