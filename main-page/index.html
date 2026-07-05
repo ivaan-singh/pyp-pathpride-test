@@ -909,6 +909,31 @@
           return Number.isFinite(points) ? `${points.toLocaleString()} pts` : 'Unavailable';
         }
 
+        function formatLeadingMessage(sortedEntries) {
+          const loadedEntries = sortedEntries.filter((entry) => getEntryPoints(entry) !== null);
+
+          if (!loadedEntries.length) {
+            return 'Loading...';
+          }
+
+          const highestPoints = getEntryPoints(loadedEntries[0]);
+          const tiedEntries = loadedEntries.filter((entry) => getEntryPoints(entry) === highestPoints);
+
+          if (tiedEntries.length === 1) {
+            return `${tiedEntries[0].dataset.house} leads`;
+          }
+
+          if (tiedEntries.length === Object.keys(CLASS_SHEETS).length) {
+            return 'Everybody is tied';
+          }
+
+          if (tiedEntries.length === 2) {
+            return `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
+          }
+
+          return `${tiedEntries.length} sections are tied`;
+        }
+
         function updateLeaderboard() {
           const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
           const sortedEntries = entries.sort((current, next) => (getEntryPoints(next) || 0) - (getEntryPoints(current) || 0));
@@ -934,6 +959,7 @@
             leaderboard.appendChild(entry);
           });
 
+          leadingHouse.textContent = formatLeadingMessage(sortedEntries);
           const topEntry = sortedEntries.find((entry) => getEntryPoints(entry) !== null);
           leadingHouse.textContent = topEntry ? `${topEntry.dataset.house} leads` : 'Loading...';
           totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
