@@ -248,11 +248,11 @@
         line-height: 1.5;
       }
 
-      .gold { background: #f2c94c; }
-      .blue { background: #8ec5ff; }
-      .purple { background: #a78bfa; }
-      .green { background: #6ee7b7; }
-      .teal { background: #5eead4; }
+      .gold { width: 92%; background: #f2c94c; }
+      .blue { width: 84%; background: #8ec5ff; }
+      .purple { width: 79%; background: #a78bfa; }
+      .green { width: 69%; background: #6ee7b7; }
+      .teal { width: 65%; background: #5eead4; }
 
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
@@ -459,23 +459,23 @@
             </div>
             <div class="bar-group" id="leaderboard">
               <div data-house="5S" data-points="340">
-                <div class="bar-label"><span>5S</span><span data-score>340 pts</span></div>
+                <div class="bar-label"><span>5S</span><span>340 pts</span></div>
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
               <div data-house="5P" data-points="0">
-                <div class="bar-label"><span>5P</span><span id="five-p-score" data-score>Loading...</span></div>
+                <div class="bar-label"><span>5P</span><span id="five-p-score">Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
               </div>
               <div data-house="5Q" data-points="295">
-                <div class="bar-label"><span>5Q</span><span data-score>295 pts</span></div>
+                <div class="bar-label"><span>5Q</span><span>295 pts</span></div>
                 <div class="bar-track"><div class="bar purple"></div></div>
               </div>
               <div data-house="5R" data-points="255">
-                <div class="bar-label"><span>5R</span><span data-score>255 pts</span></div>
+                <div class="bar-label"><span>5R</span><span>255 pts</span></div>
                 <div class="bar-track"><div class="bar green"></div></div>
               </div>
               <div data-house="5T" data-points="240">
-                <div class="bar-label"><span>5T</span><span data-score>240 pts</span></div>
+                <div class="bar-label"><span>5T</span><span>240 pts</span></div>
                 <div class="bar-track"><div class="bar teal"></div></div>
               </div>
             </div>
@@ -543,7 +543,6 @@
           { sheet: 'Specialists', range: 'H7' }
         ];
         const REQUEST_TIMEOUT_MS = 8000;
-        const PERFECT_SCORE = 10 * 50 * 40;
 
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
@@ -551,43 +550,14 @@
         const fivePScore = document.getElementById('five-p-score');
         const leaderboardStatus = document.getElementById('leaderboard-status');
 
-        function getEntryPoints(entry) {
-          const points = Number(entry.dataset.points || 0);
-          return Number.isFinite(points) ? points : 0;
-        }
-
-        function scorePercentage(points) {
-          return Math.max(0, Math.min(100, (points / PERFECT_SCORE) * 100));
-        }
-
-        function formatPercentage(points) {
-          return `${scorePercentage(points).toFixed(1)}%`;
-        }
-
-        function updateLeaderboard() {
+        function updateLeader() {
           const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+          const topEntry = entries.reduce((best, entry) => {
+            const points = Number(entry.dataset.points || 0);
+            const bestPoints = best ? Number(best.dataset.points || 0) : 0;
+            return !best || points > bestPoints ? entry : best;
+          }, null);
 
-          entries
-            .sort((a, b) => getEntryPoints(b) - getEntryPoints(a))
-            .forEach((entry) => {
-              const points = getEntryPoints(entry);
-              const percentage = formatPercentage(points);
-              const bar = entry.querySelector('.bar');
-              const score = entry.querySelector('[data-score]');
-
-              if (bar) {
-                bar.style.width = percentage;
-                bar.setAttribute('aria-label', `${entry.dataset.house} has ${percentage} of the ${PERFECT_SCORE} point goal`);
-              }
-
-              if (score) {
-                score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
-              }
-
-              leaderboard.appendChild(entry);
-            });
-
-          const topEntry = entries[0];
           if (topEntry) {
             leadingHouse.textContent = `${topEntry.dataset.house} leads`;
           }
@@ -655,11 +625,11 @@
             fivePScore.textContent = 'Error';
             leaderboardStatus.textContent = error.message || 'Unable to load the live 5P score.';
           } finally {
-            updateLeaderboard();
+            updateLeader();
           }
         }
 
-        updateLeaderboard();
+        updateLeader();
         loadFivePScore();
       })();
     </script>
