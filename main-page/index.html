@@ -4,11 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PathPride</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23171512'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='28' fill='white' font-family='Arial,sans-serif' font-weight='700'%3EP%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
       :root {
         color: #171512;
         background: #f7f5f0;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         scroll-behavior: smooth;
       }
 
@@ -97,8 +101,8 @@
 
       .hero {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 4rem;
+        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+        gap: clamp(2rem, 5vw, 5rem);
         min-height: 100vh;
         align-items: center;
         padding-top: 9rem;
@@ -124,11 +128,11 @@
       }
 
       h1 {
-        max-width: 820px;
+        max-width: 780px;
         margin-bottom: 1.5rem;
-        font-size: clamp(3.7rem, 9vw, 7.5rem);
-        line-height: 0.88;
-        letter-spacing: -0.075em;
+        font-size: clamp(3.4rem, 7vw, 6.8rem);
+        line-height: 0.96;
+        letter-spacing: -0.035em;
       }
 
       .hero-copy,
@@ -169,6 +173,9 @@
       }
 
       .hero-panel {
+        width: 100%;
+        max-width: 500px;
+        justify-self: end;
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
         background: rgba(255, 255, 255, 0.68);
@@ -232,6 +239,13 @@
 
       .muted {
         color: rgba(255, 255, 255, 0.55);
+      }
+
+      .score-status {
+        margin: 1rem 0 0;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.88rem;
+        line-height: 1.5;
       }
 
       .gold { width: 92%; background: #f2c94c; }
@@ -371,6 +385,11 @@
         .hero {
           gap: 2rem;
         }
+
+        .hero-panel {
+          max-width: none;
+          justify-self: stretch;
+        }
       }
 
       @media (max-width: 680px) {
@@ -443,8 +462,8 @@
                 <div class="bar-label"><span>5S</span><span>340 pts</span></div>
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
-              <div data-house="5P" data-points="310">
-                <div class="bar-label"><span>5P</span><span>310 pts</span></div>
+              <div data-house="5P" data-points="0">
+                <div class="bar-label"><span>5P</span><span id="five-p-score">Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
               </div>
               <div data-house="5Q" data-points="295">
@@ -460,6 +479,7 @@
                 <div class="bar-track"><div class="bar teal"></div></div>
               </div>
             </div>
+            <p class="score-status" id="leaderboard-status" role="status">Loading live 5P score...</p>
           </article>
         </div>
       </section>
@@ -516,18 +536,115 @@
     </main>
 
     <script>
-      const leaderboard = document.getElementById('leaderboard');
-      const leadingHouse = document.getElementById('leading-house');
+      var pathPrideGoogleSheetId = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
+      var pathPrideLeaderboard = document.getElementById('leaderboard');
+      var pathPrideLeadingHouse = document.getElementById('leading-house');
+      var pathPrideFivePEntry = pathPrideLeaderboard.querySelector('[data-house="5P"]');
+      var pathPrideFivePScore = document.getElementById('five-p-score');
+      var pathPrideLeaderboardStatus = document.getElementById('leaderboard-status');
+      var pathPrideLoadingFallbackId = window.setTimeout(pathPrideShowLoadError, 10000);
 
-      const entries = [...leaderboard.querySelectorAll('[data-house]')];
-      const topEntry = entries.reduce((best, entry) => {
-        const points = Number(entry.dataset.points || 0);
-        return !best || points > Number(best.dataset.points || 0) ? entry : best;
-      }, null);
-
-      if (topEntry) {
-        leadingHouse.textContent = `${topEntry.dataset.house} leads`;
+      function pathPrideShowLoadError() {
+        window.clearTimeout(pathPrideLoadingFallbackId);
+        pathPrideFivePScore.textContent = 'Error';
+        pathPrideLeaderboardStatus.textContent = 'Could not load live 5P score.';
+        pathPrideUpdateLeader();
       }
+
+      function pathPrideUpdateLeader() {
+        var entries = Array.prototype.slice.call(pathPrideLeaderboard.querySelectorAll('[data-house]'));
+        var topEntry = entries.reduce(function (best, entry) {
+          var points = Number(entry.dataset.points || 0);
+          return !best || points > Number(best.dataset.points || 0) ? entry : best;
+        }, null);
+
+        if (topEntry) {
+          pathPrideLeadingHouse.textContent = topEntry.dataset.house + ' leads';
+        }
+      }
+
+      function pathPrideParseSingleCellCsv(csvText) {
+        var trimmed = csvText.trim();
+        var value = trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"'
+          ? trimmed.slice(1, -1).replace(/""/g, '"')
+          : trimmed;
+        var number = Number(value.replace(/,/g, ''));
+
+        if (value === '' || !Number.isFinite(number)) {
+          throw new Error('Could not load live 5P score.');
+        }
+
+        return number;
+      }
+
+      function pathPrideBuildGoogleSheetsCsvUrl(sheetName, address) {
+        var sheetId = pathPrideGoogleSheetId.trim();
+        var params;
+
+        if (!sheetId) {
+          throw new Error('Could not load live 5P score.');
+        }
+
+        params = new URLSearchParams({
+          tqx: 'out:csv',
+          sheet: sheetName,
+          range: address
+        });
+
+        return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) + '/gviz/tq?' + params.toString();
+      }
+
+      function pathPrideFetchGoogleSheetCellValue(sheetName, address) {
+        var timeoutId;
+        var timeoutPromise = new Promise(function (resolve, reject) {
+          timeoutId = window.setTimeout(function () {
+            reject(new Error('Could not load live 5P score.'));
+          }, 8000);
+        });
+        var cellPromise = fetch(pathPrideBuildGoogleSheetsCsvUrl(sheetName, address), {
+          method: 'GET',
+          headers: { Accept: 'text/csv,text/plain,*/*' },
+          redirect: 'follow'
+        }).then(function (response) {
+          if (!response.ok) {
+            throw new Error('Could not load live 5P score.');
+          }
+
+          return response.text();
+        }).then(function (csvText) {
+          return pathPrideParseSingleCellCsv(csvText);
+        });
+
+        return Promise.race([cellPromise, timeoutPromise]).then(function (number) {
+          window.clearTimeout(timeoutId);
+          return number;
+        }, function (error) {
+          window.clearTimeout(timeoutId);
+          throw error;
+        });
+      }
+
+      function pathPrideGet5PScoreFromGoogleSheet() {
+        return Promise.all([
+          pathPrideFetchGoogleSheetCellValue('Scholastic', 'F7'),
+          pathPrideFetchGoogleSheetCellValue('Specialists', 'H7')
+        ]).then(function (scores) {
+          return scores[0] + scores[1];
+        });
+      }
+
+      function pathPrideLoadFivePScore() {
+        Promise.resolve().then(pathPrideGet5PScoreFromGoogleSheet).then(function (total) {
+          pathPrideFivePEntry.dataset.points = String(total);
+          pathPrideFivePScore.textContent = total + ' pts';
+          window.clearTimeout(pathPrideLoadingFallbackId);
+          pathPrideLeaderboardStatus.textContent = 'Live 5P score loaded from Google Sheets.';
+          pathPrideUpdateLeader();
+        }).catch(pathPrideShowLoadError);
+      }
+
+      pathPrideUpdateLeader();
+      pathPrideLoadFivePScore();
     </script>
   </body>
 </html>
