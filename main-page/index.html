@@ -543,6 +543,8 @@
           { sheet: 'Specialists', range: 'H7' }
         ];
         const REQUEST_TIMEOUT_MS = 8000;
+        const PERFECT_SCORE = 10 * 50 * 40;
+
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
         const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
@@ -589,7 +591,38 @@
 
             leaderboard.appendChild(entry);
           });
+        function scorePercentage(points) {
+          return Math.max(0, Math.min(100, (points / PERFECT_SCORE) * 100));
+        }
 
+        function formatPercentage(points) {
+          return `${scorePercentage(points).toFixed(1)}%`;
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+
+          entries
+            .sort((a, b) => getEntryPoints(b) - getEntryPoints(a))
+            .forEach((entry) => {
+              const points = getEntryPoints(entry);
+              const percentage = formatPercentage(points);
+              const bar = entry.querySelector('.bar');
+              const score = entry.querySelector('[data-score]');
+
+              if (bar) {
+                bar.style.width = percentage;
+                bar.setAttribute('aria-label', `${entry.dataset.house} has ${percentage} of the ${PERFECT_SCORE} point goal`);
+              }
+
+              if (score) {
+                score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
+              }
+
+              leaderboard.appendChild(entry);
+            });
+
+          const topEntry = entries[0];
           if (topEntry) {
             leadingHouse.textContent = `${topEntry.dataset.house} leads`;
           }
