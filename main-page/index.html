@@ -462,6 +462,7 @@
                 <div class="bar-label"><span>5S</span><span data-score>340 pts</span></div>
                 <div class="bar-track"><div class="bar gold"></div></div>
               </div>
+              <div data-house="5P" data-points="">
               <div data-house="5P" data-points="0">
                 <div class="bar-label"><span>5P</span><span id="five-p-score" data-score>Loading...</span></div>
                 <div class="bar-track"><div class="bar blue"></div></div>
@@ -552,6 +553,25 @@
         const leaderboardStatus = document.getElementById('leaderboard-status');
 
         function getEntryPoints(entry) {
+          const rawPoints = entry.dataset.points;
+          const points = Number(rawPoints);
+          return rawPoints === '' || !Number.isFinite(points) ? null : points;
+        }
+
+        function sortPoints(entry) {
+          return getEntryPoints(entry) || 0;
+        }
+
+        function scorePercentage(points, comparisonPoints) {
+          if (points === null || comparisonPoints <= 0) {
+            return 0;
+          }
+
+          return Math.max(0, Math.min(100, (points / comparisonPoints) * 100));
+        }
+
+        function formatPercentage(points, comparisonPoints) {
+          return `${scorePercentage(points, comparisonPoints).toFixed(1)}%`;
           const points = Number(entry.dataset.points || 0);
           return Number.isFinite(points) ? points : 0;
         }
@@ -570,6 +590,13 @@
 
         function updateLeaderboard() {
           const entries = Array.from(leaderboard.querySelectorAll('[data-house]'))
+            .sort((a, b) => sortPoints(b) - sortPoints(a));
+          const topEntry = entries[0];
+          const comparisonPoints = topEntry ? sortPoints(topEntry) : 0;
+
+          entries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = formatPercentage(points, comparisonPoints);
             .sort((a, b) => getEntryPoints(b) - getEntryPoints(a));
           const topEntry = entries[0];
           const highestPoints = topEntry ? getEntryPoints(topEntry) : 0;
@@ -585,6 +612,7 @@
               bar.setAttribute('aria-label', `${entry.dataset.house} has ${percentage} of the current leader's score`);
             }
 
+            if (score && points !== null) {
             if (score) {
               score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
             }
