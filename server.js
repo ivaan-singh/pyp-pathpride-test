@@ -7,13 +7,6 @@ const ROOT_DIR = __dirname;
 const GRAPH_ROOT = 'https://graph.microsoft.com/v1.0';
 const WORKBOOK_NAME = process.env.MICROSOFT_GRAPH_WORKBOOK_NAME || '5p.xlsx';
 
-const GOOGLE_SHEET_ID = '1bF9gjjWZG7eA-GUMmSnG0Uq9BqFsTExf2617etVVkFU';
-const GOOGLE_SCORE_CELLS = [
-  { sheet: 'Scholastic', range: 'F7' },
-  { sheet: 'Specialists', range: 'H7' }
-];
-const GOOGLE_REQUEST_TIMEOUT_MS = 8000;
-
 class PublicError extends Error {
   constructor(message, status = 500) {
     super(message);
@@ -113,65 +106,23 @@ async function readCell(token, driveId, itemId, sheetName, address) {
   return parseCellValue(payload, `${sheetName}!${address}`);
 }
 
-function buildGoogleSheetsCsvUrl(sheetName, range) {
-  const params = new URLSearchParams({
-    tqx: 'out:csv',
-    sheet: sheetName,
-    range
-  });
-
-  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(GOOGLE_SHEET_ID)}/gviz/tq?${params.toString()}`;
-}
-
-function parseSingleCellCsv(csvText, label) {
-  const trimmed = csvText.trim();
-  const value = trimmed.startsWith('"') && trimmed.endsWith('"')
-    ? trimmed.slice(1, -1).replace(/""/g, '"')
-    : trimmed;
-  const number = Number(value.replace(/,/g, ''));
-
-  if (value === '' || !Number.isFinite(number)) {
-    throw new PublicError(`${label} cannot be read as a number.`, 502);
-  }
-
-  return number;
-}
-
-async function readGoogleSheetCell({ sheet, range }) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), GOOGLE_REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(buildGoogleSheetsCsvUrl(sheet, range), {
-      headers: { Accept: 'text/csv,text/plain,*/*' },
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      throw new PublicError(`${sheet}!${range} cannot be read.`, 502);
-    }
-
-    return parseSingleCellCsv(await response.text(), `${sheet}!${range}`);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 async function handleLeaderboard(req, res) {
   try {
-    const scores = await Promise.all(GOOGLE_SCORE_CELLS.map(readGoogleSheetCell));
-    const total = scores.reduce((sum, score) => sum + score, 0);
+    const token = await getGraphToken();
+    const { driveId, itemId } = await findWorkbook(token);
+    const [scholastic, specialists] = await Promise.all([
+      readCell(token, driveId, itemId, 'Scholastic', 'F7'),
+      readCell(token, driveId, itemId, 'Specialists', 'H7')
+    ]);
 
     sendJson(res, 200, {
       section: '5P',
-      scholastic: scores[0],
-      specialists: scores[1],
-      total
+      scholastic,
+      specialists,
+      total: scholastic + specialists
     });
   } catch (error) {
-    const isAbort = error && error.name === 'AbortError';
-    const message = isAbort ? 'Google Sheets request timed out.' : error.message;
-    sendJson(res, error.status || 500, { error: message || 'Unable to load the 5P leaderboard score.' });
+    sendJson(res, error.status || 500, { error: error.message || 'Unable to load the 5P leaderboard score.' });
   }
 }
 

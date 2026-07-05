@@ -544,7 +544,6 @@
           { sheet: 'Scholastic', range: 'F7' },
           { sheet: 'Specialists', range: 'H7' }
         ];
-        const API_SCORE_URL = '/api/leaderboard/5p';
         const REQUEST_TIMEOUT_MS = 8000;
         const MAX_SCORE = 10 * 50 * 40;
 
@@ -553,26 +552,6 @@
         const fivePEntry = leaderboard.querySelector('[data-house="5P"]');
         const fivePScore = document.getElementById('five-p-score');
         const leaderboardStatus = document.getElementById('leaderboard-status');
-
-        function getEntryPoints(entry) {
-          const points = Number(entry.dataset.points || 0);
-          return Number.isFinite(points) ? points : 0;
-        }
-
-        function scoreToPercent(points) {
-          const percentage = (points / MAX_SCORE) * 100;
-          return Math.max(0, Math.min(100, percentage));
-        }
-
-        function updateEntryDisplay(entry) {
-          const points = getEntryPoints(entry);
-          const pointsLabel = entry.querySelector('[data-points-label]');
-          const bar = entry.querySelector('.bar');
-
-          if (pointsLabel && pointsLabel.id !== 'five-p-score') {
-            pointsLabel.textContent = `${points} pts`;
-          }
-
 
         function getEntryPoints(entry) {
           const points = Number(entry.dataset.points || 0);
@@ -660,38 +639,6 @@
             });
           } finally {
             window.clearTimeout(timeoutId);
-          }
-        }
-
-        async function readGoogleSheetCell({ sheet, range }) {
-          const response = await fetchWithTimeout(buildGoogleSheetsCsvUrl(sheet, range));
-
-          if (!response.ok) {
-            throw new Error(`${sheet}!${range} cannot be read.`);
-          }
-
-          return parseSingleCellCsv(await response.text(), `${sheet}!${range}`);
-        }
-
-        async function getFivePScoreFromApi() {
-          const response = await fetchWithTimeout(API_SCORE_URL);
-          const payload = await response.json().catch(() => ({}));
-
-          if (!response.ok) {
-            throw new Error(payload.error || 'Unable to load the live 5P score.');
-          }
-
-          const total = Number(payload.total);
-          if (!Number.isFinite(total)) {
-            throw new Error('The live 5P score is not a number.');
-          }
-
-          return total;
-        }
-
-        async function getFivePScoreDirectlyFromSheet() {
-          const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
-          return scores.reduce((sum, score) => sum + score, 0);
         function parseSingleCellCsv(csvText, label) {
           const trimmed = csvText.trim();
           const value = trimmed.startsWith('"') && trimmed.endsWith('"')
@@ -751,12 +698,6 @@
 
         async function loadFivePScore() {
           try {
-            let total;
-            try {
-              total = await getFivePScoreFromApi();
-            } catch (apiError) {
-              total = await getFivePScoreDirectlyFromSheet();
-            }
             const scores = await Promise.all(SCORE_CELLS.map(readGoogleSheetCell));
             const total = scores.reduce((sum, score) => sum + score, 0);
 
