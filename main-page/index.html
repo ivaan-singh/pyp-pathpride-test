@@ -556,6 +556,41 @@
           return Number.isFinite(points) ? points : 0;
         }
 
+        function scorePercentage(points, highestPoints) {
+          if (highestPoints <= 0) {
+            return 0;
+          }
+
+          return Math.max(0, Math.min(100, (points / highestPoints) * 100));
+        }
+
+        function formatPercentage(points, highestPoints) {
+          return `${scorePercentage(points, highestPoints).toFixed(1)}%`;
+        }
+
+        function updateLeaderboard() {
+          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'))
+            .sort((a, b) => getEntryPoints(b) - getEntryPoints(a));
+          const topEntry = entries[0];
+          const highestPoints = topEntry ? getEntryPoints(topEntry) : 0;
+
+          entries.forEach((entry) => {
+            const points = getEntryPoints(entry);
+            const percentage = formatPercentage(points, highestPoints);
+            const bar = entry.querySelector('.bar');
+            const score = entry.querySelector('[data-score]');
+
+            if (bar) {
+              bar.style.width = percentage;
+              bar.setAttribute('aria-label', `${entry.dataset.house} has ${percentage} of the current leader's score`);
+            }
+
+            if (score) {
+              score.textContent = `${points.toLocaleString()} pts · ${percentage}`;
+            }
+
+            leaderboard.appendChild(entry);
+          });
         function scorePercentage(points) {
           return Math.max(0, Math.min(100, (points / PERFECT_SCORE) * 100));
         }
