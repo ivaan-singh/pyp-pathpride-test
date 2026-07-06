@@ -909,6 +909,29 @@
           return Number.isFinite(points) ? `${points.toLocaleString()} pts` : 'Unavailable';
         }
 
+        function describeLeaderboardLeader(sortedEntries, highestPoints) {
+          const tiedEntries = sortedEntries.filter((entry) => getEntryPoints(entry) === highestPoints);
+          const tiedCount = tiedEntries.length;
+
+          if (!tiedCount) {
+            return 'Loading...';
+          }
+
+          if (tiedCount === Object.keys(CLASS_SHEETS).length) {
+            return 'All teams are tied on the leaderboard';
+          }
+
+          if (tiedCount === 2) {
+            return `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
+          }
+
+          if (tiedCount > 2) {
+            return `${tiedCount} teams are tied`;
+          }
+
+          return `${tiedEntries[0].dataset.house} leads`;
+        }
+
         function updateLeaderboard() {
           const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
           const sortedEntries = entries.sort((current, next) => (getEntryPoints(next) || 0) - (getEntryPoints(current) || 0));
@@ -934,8 +957,7 @@
             leaderboard.appendChild(entry);
           });
 
-          const topEntry = sortedEntries.find((entry) => getEntryPoints(entry) !== null);
-          leadingHouse.textContent = topEntry ? `${topEntry.dataset.house} leads` : 'Loading...';
+          leadingHouse.textContent = loadedPoints.length ? describeLeaderboardLeader(sortedEntries, highestPoints) : 'Loading...';
           totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
         }
 
