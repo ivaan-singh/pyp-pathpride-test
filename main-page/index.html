@@ -367,6 +367,7 @@
       .comparison-list .stats-note {
         grid-column: 1;
         min-width: 100%;
+        gap: 0.85rem;
       }
 
       .comparison-panel {
@@ -941,6 +942,7 @@
             tiedClasses: totals.filter((result) => result.total === targetTotal).map((result) => result.className),
             classCount: totals.length
           };
+          return result ? `${result.className} (${result.total} pts)` : 'Unavailable';
         }
 
         function getSubjectClassComparisons(category) {
@@ -973,6 +975,11 @@
               worst: getTiedClassResult(totals, lowestTotal)
             };
           }).sort((current, next) => current.subject.localeCompare(next.subject));
+          return Object.entries(subjectTotals).map(([subject, totals]) => ({
+            subject,
+            best: totals.reduce((winner, current) => current.total > winner.total ? current : winner, totals[0]),
+            worst: totals.reduce((lowest, current) => current.total < lowest.total ? current : lowest, totals[0])
+          })).sort((current, next) => current.subject.localeCompare(next.subject));
         }
 
         function renderSubjectComparison(category) {
