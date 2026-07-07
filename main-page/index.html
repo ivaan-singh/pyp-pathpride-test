@@ -305,14 +305,31 @@
         margin: 0;
       }
 
-      .class-switcher {
+      .class-switcher,
+      .category-switcher {
         display: flex;
         flex-wrap: wrap;
         gap: 0.45rem;
         justify-content: flex-end;
       }
 
-      .class-tab {
+      .comparison-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .comparison-header .category-switcher {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .category-tab {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+
+      .class-tab,
+      .category-tab {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 999px;
         background: #f7f5f0;
@@ -324,9 +341,64 @@
         cursor: pointer;
       }
 
-      .class-tab.active {
+      .class-tab.active,
+      .category-tab.active {
         background: #171512;
         color: white;
+      }
+
+      .subject-comparison-card {
+        display: grid;
+        align-content: start;
+        gap: 1rem;
+      }
+
+      .comparison-list {
+        display: grid;
+        grid-auto-columns: minmax(15rem, 82%);
+        grid-auto-flow: column;
+        gap: 0.85rem;
+        overflow-x: auto;
+        padding-bottom: 0.35rem;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .comparison-list .stats-note {
+        grid-column: 1;
+        min-width: 100%;
+      }
+
+      .comparison-panel {
+        border: 1px solid rgba(23, 21, 18, 0.08);
+        border-radius: 1.35rem;
+        background: #f7f5f0;
+        padding: 1rem;
+        scroll-snap-align: start;
+      }
+
+      .comparison-panel h4 {
+        margin: 0 0 0.85rem;
+        font-size: 1rem;
+      }
+
+      .comparison-row {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+        gap: 0.75rem;
+        border-top: 1px solid rgba(23, 21, 18, 0.08);
+        padding-top: 0.7rem;
+        margin-top: 0.7rem;
+        color: rgba(23, 21, 18, 0.68);
+        font-weight: 700;
+      }
+
+      .comparison-row strong {
+        display: inline;
+        margin: 0;
+        color: #171512;
+        font-size: 1rem;
+        letter-spacing: normal;
       }
 
       .subject-stats-grid {
@@ -475,7 +547,6 @@
           max-width: none;
         }
 
-        .stats-card-header,
         .subject-stats-grid {
           grid-template-columns: 1fr;
         }
@@ -577,10 +648,18 @@
           <p class="section-copy">Clear standings, points and achievements help the community follow student council progress without requiring an account.</p>
 
           <div class="overview-grid">
-            <article class="stat-card">
-              <p>Total points</p>
-              <strong id="total-points">Loading...</strong>
-              <span>Combined points earned through participation, service and school events.</span>
+            <article class="stat-card subject-comparison-card">
+              <div class="stats-card-header comparison-header">
+                <p id="comparison-title">Subject comparison</p>
+                <div class="category-switcher" aria-label="Choose subject comparison category">
+                  <button class="category-tab active" type="button" data-category="scholastic">Scholastic</button>
+                  <button class="category-tab" type="button" data-category="specialist">Specialists</button>
+                  <button class="category-tab" type="button" data-category="miscellaneous">Miscellaneous</button>
+                </div>
+              </div>
+              <div class="comparison-list" id="subject-comparison-list" aria-live="polite">
+                <p class="stats-note">Loading subject comparisons...</p>
+              </div>
             </article>
 
             <article class="stat-card stats-card">
@@ -655,8 +734,9 @@
           { sheet: 'Specialists', range: 'H7' }
         ];
         const SUBJECT_SCORE_RANGES = {
-          scholastic: { sheet: 'Scholastic', range: 'B1:E6' },
-          specialist: { sheet: 'Specialists', range: 'B1:G6' }
+          scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z6' },
+          specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z6' },
+          miscellaneous: { label: 'Miscellaneous', sheet: 'Miscellaneous', range: 'B1:Z6' }
         };
         const REQUEST_TIMEOUT_MS = 8000;
         const CLASS_COLORS = ['gold', 'blue', 'purple', 'green', 'teal'];
@@ -664,7 +744,9 @@
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
         const leaderboardStatus = document.getElementById('leaderboard-status');
-        const totalPoints = document.getElementById('total-points');
+        const comparisonTitle = document.getElementById('comparison-title');
+        const subjectComparisonList = document.getElementById('subject-comparison-list');
+        const categoryTabs = Array.from(document.querySelectorAll('.category-tab'));
         const classStatsTitle = document.getElementById('class-stats-title');
         const scholasticBest = document.getElementById('scholastic-best');
         const scholasticWorst = document.getElementById('scholastic-worst');
@@ -672,6 +754,7 @@
         const specialistWorst = document.getElementById('specialist-worst');
         const classTabs = Array.from(document.querySelectorAll('.class-tab'));
         let selectedClass = '5P';
+        let selectedCategory = 'scholastic';
         const classStats = {};
         const pendingClassStats = {};
 
@@ -731,6 +814,10 @@
           return parseNumber(value, label);
         }
 
+        function isSubjectComparisonHeader(subject) {
+          return subject && !/^total\b/i.test(subject.trim());
+        }
+
         function parseSubjectScoresCsv(csvText, label) {
           const rows = parseCsvRows(csvText);
           const headers = rows[0] || [];
@@ -741,7 +828,7 @@
           }
 
           return headers.reduce((subjects, subject, columnIndex) => {
-            if (subject) {
+            if (isSubjectComparisonHeader(subject)) {
               subjects[subject] = scoreRows.map((row, rowIndex) => parseNumber(row[columnIndex], `${label} ${subject} row ${rowIndex + 1}`));
             }
             return subjects;
@@ -791,15 +878,17 @@
         }
 
         async function readClassSubjectStats(className) {
-          const [scholasticCsv, specialistCsv] = await Promise.all([
-            readGoogleSheetRange(className, SUBJECT_SCORE_RANGES.scholastic),
-            readGoogleSheetRange(className, SUBJECT_SCORE_RANGES.specialist)
-          ]);
+          const categoryEntries = await Promise.all(Object.entries(SUBJECT_SCORE_RANGES).map(async ([category, scoreRange]) => {
+            try {
+              const csvText = await readGoogleSheetRange(className, scoreRange);
+              return [category, parseSubjectScoresCsv(csvText, `${className} ${scoreRange.label}`)];
+            } catch (error) {
+              console.warn(error);
+              return [category, null];
+            }
+          }));
 
-          return {
-            scholastic: parseSubjectScoresCsv(scholasticCsv, `${className} scholastic`),
-            specialist: parseSubjectScoresCsv(specialistCsv, `${className} specialists`)
-          };
+          return Object.fromEntries(categoryEntries);
         }
 
         function getSubjectSummary(subjects) {
@@ -824,6 +913,109 @@
           }
         }
 
+        function formatClassResult(result) {
+          if (!result) {
+            return 'Unavailable';
+          }
+
+          const points = `(${result.total} pts)`;
+
+          if (result.tiedClasses.length === result.classCount) {
+            return `All are tied ${points}`;
+          }
+
+          if (result.tiedClasses.length === 2) {
+            return `${result.tiedClasses[0]} and ${result.tiedClasses[1]} ${points}`;
+          }
+
+          if (result.tiedClasses.length > 2) {
+            return `${result.tiedClasses.length} teams are tied ${points}`;
+          }
+
+          return `${result.tiedClasses[0]} ${points}`;
+        }
+
+        function getTiedClassResult(totals, targetTotal) {
+          return {
+            total: targetTotal,
+            tiedClasses: totals.filter((result) => result.total === targetTotal).map((result) => result.className),
+            classCount: totals.length
+          };
+        }
+
+        function getSubjectClassComparisons(category) {
+          const subjectTotals = {};
+
+          Object.entries(classStats).forEach(([className, stats]) => {
+            const categorySubjects = stats && stats[category];
+            if (!categorySubjects) {
+              return;
+            }
+
+            Object.entries(categorySubjects).forEach(([subject, rows]) => {
+              if (!subjectTotals[subject]) {
+                subjectTotals[subject] = [];
+              }
+              subjectTotals[subject].push({
+                className,
+                total: rows.reduce((sum, points) => sum + points, 0)
+              });
+            });
+          });
+
+          return Object.entries(subjectTotals).map(([subject, totals]) => {
+            const highestTotal = Math.max(...totals.map((result) => result.total));
+            const lowestTotal = Math.min(...totals.map((result) => result.total));
+
+            return {
+              subject,
+              best: getTiedClassResult(totals, highestTotal),
+              worst: getTiedClassResult(totals, lowestTotal)
+            };
+          }).sort((current, next) => current.subject.localeCompare(next.subject));
+        }
+
+        function renderSubjectComparison(category) {
+          const scoreRange = SUBJECT_SCORE_RANGES[category];
+          const comparisons = getSubjectClassComparisons(category);
+          comparisonTitle.textContent = `${scoreRange.label} comparison`;
+
+          if (!comparisons.length) {
+            subjectComparisonList.innerHTML = '<p class="stats-note">No subject data available yet. Miscellaneous will appear here once that sheet is added.</p>';
+            return;
+          }
+
+          subjectComparisonList.replaceChildren(...comparisons.map((comparison) => {
+            const panel = document.createElement('div');
+            panel.className = 'comparison-panel';
+
+            const title = document.createElement('h4');
+            title.textContent = comparison.subject;
+            panel.appendChild(title);
+
+            [['Best class', comparison.best], ['Could improve', comparison.worst]].forEach(([label, result]) => {
+              const row = document.createElement('div');
+              row.className = 'comparison-row';
+
+              const rowLabel = document.createElement('span');
+              rowLabel.textContent = label;
+
+              const rowResult = document.createElement('strong');
+              rowResult.textContent = formatClassResult(result);
+
+              row.append(rowLabel, rowResult);
+              panel.appendChild(row);
+            });
+
+            return panel;
+          }));
+        }
+
+        function renderSubjectComparisonLoading(category) {
+          comparisonTitle.textContent = `${SUBJECT_SCORE_RANGES[category].label} comparison`;
+          subjectComparisonList.innerHTML = '<p class="stats-note">Loading subject comparisons...</p>';
+        }
+
         function renderStatsLoading(className) {
           classStatsTitle.textContent = `${className} stats`;
           scholasticBest.textContent = 'Loading...';
@@ -842,8 +1034,8 @@
 
         function renderClassStats(className) {
           const stats = classStats[className];
-          const scholastic = getSubjectSummary(stats.scholastic);
-          const specialist = getSubjectSummary(stats.specialist);
+          const scholastic = getSubjectSummary(stats.scholastic || {});
+          const specialist = getSubjectSummary(stats.specialist || {});
 
           classStatsTitle.textContent = `${className} stats`;
           renderSubjectResult(scholasticBest, scholastic && scholastic.best);
@@ -873,6 +1065,25 @@
           loadClassStats(className);
         }
 
+        function updateActiveCategoryTab(category) {
+          categoryTabs.forEach((tab) => {
+            const isActive = tab.dataset.category === category;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-pressed', String(isActive));
+          });
+        }
+
+        function updateSubjectComparison(category) {
+          selectedCategory = category;
+          updateActiveCategoryTab(category);
+
+          if (Object.keys(classStats).length) {
+            renderSubjectComparison(category);
+          } else {
+            renderSubjectComparisonLoading(category);
+          }
+        }
+
         async function loadClassStats(className) {
           if (pendingClassStats[className]) {
             return pendingClassStats[className];
@@ -884,6 +1095,7 @@
               if (selectedClass === className) {
                 renderClassStats(className);
               }
+              renderSubjectComparison(selectedCategory);
               return stats;
             })
             .catch((error) => {
@@ -937,7 +1149,6 @@
           const sortedEntries = entries.sort((current, next) => (getEntryPoints(next) || 0) - (getEntryPoints(current) || 0));
           const loadedPoints = sortedEntries.map(getEntryPoints).filter((points) => points !== null);
           const highestPoints = Math.max(...loadedPoints, 0);
-          const combinedPoints = loadedPoints.reduce((sum, points) => sum + points, 0);
 
           sortedEntries.forEach((entry) => {
             const points = getEntryPoints(entry);
@@ -958,7 +1169,6 @@
           });
 
           leadingHouse.textContent = loadedPoints.length ? describeLeaderboardLeader(sortedEntries, highestPoints) : 'Loading...';
-          totalPoints.textContent = loadedPoints.length ? combinedPoints.toLocaleString() : 'Loading...';
         }
 
         function createLeaderboardRows() {
@@ -1019,8 +1229,14 @@
           tab.addEventListener('click', () => updateClassStats(tab.dataset.class));
         });
 
+        categoryTabs.forEach((tab) => {
+          tab.addEventListener('click', () => updateSubjectComparison(tab.dataset.category));
+        });
+
         createLeaderboardRows();
+        updateSubjectComparison(selectedCategory);
         updateClassStats(selectedClass);
+        Object.keys(CLASS_SHEETS).filter((className) => className !== selectedClass).forEach(loadClassStats);
         updateLeaderboard();
         loadClassScores();
       })();
