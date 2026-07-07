@@ -355,6 +355,18 @@
 
       .comparison-list {
         display: grid;
+        grid-auto-columns: minmax(15rem, 82%);
+        grid-auto-flow: column;
+        gap: 0.85rem;
+        overflow-x: auto;
+        padding-bottom: 0.35rem;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .comparison-list .stats-note {
+        grid-column: 1;
+        min-width: 100%;
         gap: 0.85rem;
       }
 
@@ -363,6 +375,7 @@
         border-radius: 1.35rem;
         background: #f7f5f0;
         padding: 1rem;
+        scroll-snap-align: start;
       }
 
       .comparison-panel h4 {
