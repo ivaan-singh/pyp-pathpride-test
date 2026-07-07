@@ -815,6 +815,10 @@
           return parseNumber(value, label);
         }
 
+        function isSubjectComparisonHeader(subject) {
+          return subject && !/^total\b/i.test(subject.trim());
+        }
+
         function parseSubjectScoresCsv(csvText, label) {
           const rows = parseCsvRows(csvText);
           const headers = rows[0] || [];
@@ -825,7 +829,7 @@
           }
 
           return headers.reduce((subjects, subject, columnIndex) => {
-            if (subject) {
+            if (isSubjectComparisonHeader(subject)) {
               subjects[subject] = scoreRows.map((row, rowIndex) => parseNumber(row[columnIndex], `${label} ${subject} row ${rowIndex + 1}`));
             }
             return subjects;
@@ -911,6 +915,33 @@
         }
 
         function formatClassResult(result) {
+          if (!result) {
+            return 'Unavailable';
+          }
+
+          const points = `(${result.total} pts)`;
+
+          if (result.tiedClasses.length === result.classCount) {
+            return `All are tied ${points}`;
+          }
+
+          if (result.tiedClasses.length === 2) {
+            return `${result.tiedClasses[0]} and ${result.tiedClasses[1]} ${points}`;
+          }
+
+          if (result.tiedClasses.length > 2) {
+            return `${result.tiedClasses.length} teams are tied ${points}`;
+          }
+
+          return `${result.tiedClasses[0]} ${points}`;
+        }
+
+        function getTiedClassResult(totals, targetTotal) {
+          return {
+            total: targetTotal,
+            tiedClasses: totals.filter((result) => result.total === targetTotal).map((result) => result.className),
+            classCount: totals.length
+          };
           return result ? `${result.className} (${result.total} pts)` : 'Unavailable';
         }
 
@@ -934,6 +965,16 @@
             });
           });
 
+          return Object.entries(subjectTotals).map(([subject, totals]) => {
+            const highestTotal = Math.max(...totals.map((result) => result.total));
+            const lowestTotal = Math.min(...totals.map((result) => result.total));
+
+            return {
+              subject,
+              best: getTiedClassResult(totals, highestTotal),
+              worst: getTiedClassResult(totals, lowestTotal)
+            };
+          }).sort((current, next) => current.subject.localeCompare(next.subject));
           return Object.entries(subjectTotals).map(([subject, totals]) => ({
             subject,
             best: totals.reduce((winner, current) => current.total > winner.total ? current : winner, totals[0]),
