@@ -222,7 +222,12 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 0.45rem;
+        color: white;
         font-size: 0.95rem;
+      }
+
+      .standings-card .bar-label span {
+        color: white;
       }
 
       .bar-track {
@@ -241,6 +246,15 @@
 
       .muted {
         color: rgba(255, 255, 255, 0.55);
+      }
+
+      .standings-card .muted,
+      .standings-card .score-status {
+        color: rgba(255, 255, 255, 0.66);
+      }
+
+      .standings-card .live-pill {
+        color: rgba(255, 255, 255, 0.7);
       }
 
       .score-status {
@@ -273,6 +287,11 @@
 
       .weekly-leaderboard-card .standings-card {
         height: 100%;
+      }
+
+      .weekly-leaderboard-card,
+      .weekly-leaderboard-card * {
+        color: white !important;
       }
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
@@ -983,6 +1002,12 @@
 
           if (result.tiedClasses.length === 2) {
             return `2 sections are tied ${points}`;
+          }
+
+          if (result.tiedClasses.length === 3) {
+            return `3 sections are tied ${points}`;
+          }
+
           }
 
           if (result.tiedClasses.length === 3) {
