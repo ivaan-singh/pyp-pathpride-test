@@ -281,6 +281,8 @@
       .weekly-leaderboard-card {
         max-width: none;
         justify-self: stretch;
+        display: grid;
+        gap: 1.25rem;
       }
 
       .weekly-leaderboard-card .standings-card {
@@ -682,6 +684,7 @@
 
           <div class="overview-grid">
             <div class="hero-panel weekly-leaderboard-card">
+            <article class="stat-card weekly-leaderboard-card">
               <article class="standings-card" aria-label="Weekly class leaderboard">
                 <div class="standings-header">
                   <div>
@@ -689,11 +692,13 @@
                     <h3 id="weekly-leading-house">Loading...</h3>
                   </div>
                   <span class="live-pill">Weekly view</span>
+                  <span class="live-pill">This week</span>
                 </div>
                 <div class="bar-group" id="weekly-leaderboard" aria-live="polite"></div>
                 <p class="score-status" id="weekly-leaderboard-status" role="status">Loading weekly scores...</p>
               </article>
             </div>
+            </article>
 
             <article class="stat-card stats-card">
               <div class="stats-card-header">
@@ -997,6 +1002,12 @@
 
           if (result.tiedClasses.length === 2) {
             return `2 sections are tied ${points}`;
+          }
+
+          if (result.tiedClasses.length === 3) {
+            return `3 sections are tied ${points}`;
+          }
+
           }
 
           if (result.tiedClasses.length === 3) {
