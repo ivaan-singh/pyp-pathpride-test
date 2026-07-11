@@ -263,6 +263,19 @@
         gap: 1.5rem;
         align-items: stretch;
       }
+
+      .full-width-card {
+        grid-column: 1 / -1;
+      }
+
+      .weekly-leaderboard-card {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .weekly-leaderboard-card .bar-track {
+        background: rgba(23, 21, 18, 0.08);
+      }
       .stat-card {
         border: 1px solid rgba(23, 21, 18, 0.1);
         border-radius: 2rem;
@@ -543,6 +556,10 @@
           grid-template-columns: 1fr;
         }
 
+        .full-width-card {
+          grid-column: auto;
+        }
+
         .login-card {
           justify-self: stretch;
           max-width: none;
@@ -649,18 +666,16 @@
           <p class="section-copy">Clear standings, points and achievements help the community follow student council progress without requiring an account.</p>
 
           <div class="overview-grid">
-            <article class="stat-card subject-comparison-card">
-              <div class="stats-card-header comparison-header">
-                <p id="comparison-title">Subject comparison</p>
-                <div class="category-switcher" aria-label="Choose subject comparison category">
-                  <button class="category-tab active" type="button" data-category="scholastic">Scholastic</button>
-                  <button class="category-tab" type="button" data-category="specialist">Specialists</button>
-                  <button class="category-tab" type="button" data-category="miscellaneous">Miscellaneous</button>
+            <article class="stat-card weekly-leaderboard-card">
+              <div class="stats-card-header">
+                <div>
+                  <p>Weekly leaderboard</p>
+                  <strong id="weekly-leading-house">Loading...</strong>
                 </div>
+                <span class="stats-note">Latest completed weekly points</span>
               </div>
-              <div class="comparison-list" id="subject-comparison-list" aria-live="polite">
-                <p class="stats-note">Loading subject comparisons...</p>
-              </div>
+              <div class="bar-group" id="weekly-leaderboard" aria-live="polite"></div>
+              <p class="stats-note" id="weekly-leaderboard-status" role="status">Loading weekly class scores...</p>
             </article>
 
             <article class="stat-card stats-card">
@@ -687,6 +702,20 @@
                 </div>
               </div>
               <p class="stats-note">Based on each selected class's weekly subject rows. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
+            </article>
+
+            <article class="stat-card subject-comparison-card full-width-card">
+              <div class="stats-card-header comparison-header">
+                <p id="comparison-title">Subject comparison</p>
+                <div class="category-switcher" aria-label="Choose subject comparison category">
+                  <button class="category-tab active" type="button" data-category="scholastic">Scholastic</button>
+                  <button class="category-tab" type="button" data-category="specialist">Specialists</button>
+                  <button class="category-tab" type="button" data-category="miscellaneous">Miscellaneous</button>
+                </div>
+              </div>
+              <div class="comparison-list" id="subject-comparison-list" aria-live="polite">
+                <p class="stats-note">Loading subject comparisons...</p>
+              </div>
             </article>
           </div>
         </div>
@@ -734,6 +763,10 @@
           { sheet: 'Scholastic', range: 'F7' },
           { sheet: 'Specialists', range: 'H7' }
         ];
+        const WEEKLY_SCORE_RANGES = [
+          { sheet: 'Scholastic', range: 'F:F', column: 'F' },
+          { sheet: 'Specialists', range: 'H:H', column: 'H' }
+        ];
         const SUBJECT_SCORE_RANGES = {
           scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z6' },
           specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z6' },
@@ -745,6 +778,9 @@
         const leaderboard = document.getElementById('leaderboard');
         const leadingHouse = document.getElementById('leading-house');
         const leaderboardStatus = document.getElementById('leaderboard-status');
+        const weeklyLeaderboard = document.getElementById('weekly-leaderboard');
+        const weeklyLeadingHouse = document.getElementById('weekly-leading-house');
+        const weeklyLeaderboardStatus = document.getElementById('weekly-leaderboard-status');
         const comparisonTitle = document.getElementById('comparison-title');
         const subjectComparisonList = document.getElementById('subject-comparison-list');
         const categoryTabs = Array.from(document.querySelectorAll('.category-tab'));
@@ -815,6 +851,18 @@
           return parseNumber(value, label);
         }
 
+        function parseSecondLastFilledColumnCsv(csvText, label) {
+          const values = parseCsvRows(csvText)
+            .map((row) => row[0])
+            .filter((value) => String(value || '').trim() !== '');
+
+          if (values.length < 2) {
+            throw new Error(`${label} does not have enough filled weekly scores.`);
+          }
+
+          return parseNumber(values[values.length - 2], label);
+        }
+
         function isSubjectComparisonHeader(subject) {
           return subject && !/^total\b/i.test(subject.trim());
         }
@@ -876,6 +924,11 @@
         async function readGoogleSheetCell(className, scoreRange) {
           const csvText = await readGoogleSheetRange(className, scoreRange);
           return parseSingleCellCsv(csvText, `${className} ${scoreRange.sheet}!${scoreRange.range}`);
+        }
+
+        async function readSecondLastFilledScore(className, scoreRange) {
+          const csvText = await readGoogleSheetRange(className, scoreRange);
+          return parseSecondLastFilledColumnCsv(csvText, `${className} ${scoreRange.sheet} column ${scoreRange.column}`);
         }
 
         async function readClassSubjectStats(className) {
@@ -1128,7 +1181,7 @@
           return Number.isFinite(points) ? `${points.toLocaleString()} pts` : 'Unavailable';
         }
 
-        function describeLeaderboardLeader(sortedEntries, highestPoints) {
+        function describeLeaderboardLeader(sortedEntries, highestPoints, label = 'teams') {
           const tiedEntries = sortedEntries.filter((entry) => getEntryPoints(entry) === highestPoints);
           const tiedCount = tiedEntries.length;
 
@@ -1137,22 +1190,22 @@
           }
 
           if (tiedCount === Object.keys(CLASS_SHEETS).length) {
-            return 'All teams are tied';
+            return label === 'sections' ? 'all sections are tied' : `All ${label} are tied`;
           }
 
           if (tiedCount === 2) {
-            return `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
+            return label === 'sections' ? `2 ${label} are tied` : `${tiedEntries[0].dataset.house} and ${tiedEntries[1].dataset.house} are tied`;
           }
 
           if (tiedCount > 2) {
-            return `${tiedCount} teams are tied`;
+            return `${tiedCount} ${label} are tied`;
           }
 
           return `${tiedEntries[0].dataset.house} leads`;
         }
 
-        function updateLeaderboard() {
-          const entries = Array.from(leaderboard.querySelectorAll('[data-house]'));
+        function updateLeaderboard(targetLeaderboard = leaderboard, targetLeadingHouse = leadingHouse, label = 'teams') {
+          const entries = Array.from(targetLeaderboard.querySelectorAll('[data-house]'));
           const sortedEntries = entries.sort((current, next) => (getEntryPoints(next) || 0) - (getEntryPoints(current) || 0));
           const loadedPoints = sortedEntries.map(getEntryPoints).filter((points) => points !== null);
           const highestPoints = Math.max(...loadedPoints, 0);
@@ -1172,14 +1225,14 @@
               bar.setAttribute('aria-label', `${entry.dataset.house} has ${Math.round(percentage)}% of the leading score`);
             }
 
-            leaderboard.appendChild(entry);
+            targetLeaderboard.appendChild(entry);
           });
 
-          leadingHouse.textContent = loadedPoints.length ? describeLeaderboardLeader(sortedEntries, highestPoints) : 'Loading...';
+          targetLeadingHouse.textContent = loadedPoints.length ? describeLeaderboardLeader(sortedEntries, highestPoints, label) : 'Loading...';
         }
 
-        function createLeaderboardRows() {
-          leaderboard.replaceChildren(...Object.keys(CLASS_SHEETS).map((className, index) => {
+        function createLeaderboardRows(targetLeaderboard = leaderboard) {
+          targetLeaderboard.replaceChildren(...Object.keys(CLASS_SHEETS).map((className, index) => {
             const row = document.createElement('div');
             row.dataset.house = className;
             row.innerHTML = `
@@ -1190,11 +1243,11 @@
           }));
         }
 
-        async function loadClassScores() {
+        async function loadClassScores({ scoreRanges = TOTAL_SCORE_RANGES, targetLeaderboard = leaderboard, statusElement = leaderboardStatus, leadingElement = leadingHouse, label = 'teams', readScore = readGoogleSheetCell, successMessage = 'Live scores loaded from Google Sheets.', partialMessage = 'live scores loaded from Google Sheets.', errorMessage = 'Unable to load live scores from Google Sheets.' } = {}) {
           const scoreLoads = Object.keys(CLASS_SHEETS).map(async (className) => {
-            const scores = await Promise.all(TOTAL_SCORE_RANGES.map((scoreRange) => readGoogleSheetCell(className, scoreRange)));
+            const scores = await Promise.all(scoreRanges.map((scoreRange) => readScore(className, scoreRange)));
             const total = scores.reduce((sum, score) => sum + score, 0);
-            const entry = leaderboard.querySelector(`[data-house="${className}"]`);
+            const entry = targetLeaderboard.querySelector(`[data-house="${className}"]`);
 
             if (entry) {
               entry.dataset.points = String(total);
@@ -1210,7 +1263,7 @@
             if (result.status === 'rejected') {
               console.error(result.reason);
               const className = Object.keys(CLASS_SHEETS)[index];
-              const entry = leaderboard.querySelector(`[data-house="${className}"]`);
+              const entry = targetLeaderboard.querySelector(`[data-house="${className}"]`);
               if (entry) {
                 entry.dataset.points = '';
                 const scoreLabel = entry.querySelector('.bar-label span:last-child');
@@ -1222,14 +1275,14 @@
           });
 
           if (loadedCount === results.length) {
-            leaderboardStatus.textContent = 'Live scores loaded from Google Sheets.';
+            statusElement.textContent = successMessage;
           } else if (loadedCount > 0) {
-            leaderboardStatus.textContent = `${loadedCount} of ${results.length} live scores loaded from Google Sheets.`;
+            statusElement.textContent = `${loadedCount} of ${results.length} ${partialMessage}`;
           } else {
-            leaderboardStatus.textContent = 'Unable to load live scores from Google Sheets.';
+            statusElement.textContent = errorMessage;
           }
 
-          updateLeaderboard();
+          updateLeaderboard(targetLeaderboard, leadingElement, label);
         }
 
         classTabs.forEach((tab) => {
@@ -1241,11 +1294,24 @@
         });
 
         createLeaderboardRows();
+        createLeaderboardRows(weeklyLeaderboard);
         updateSubjectComparison(selectedCategory);
         updateClassStats(selectedClass);
         Object.keys(CLASS_SHEETS).filter((className) => className !== selectedClass).forEach(loadClassStats);
         updateLeaderboard();
+        updateLeaderboard(weeklyLeaderboard, weeklyLeadingHouse, 'sections');
         loadClassScores();
+        loadClassScores({
+          scoreRanges: WEEKLY_SCORE_RANGES,
+          targetLeaderboard: weeklyLeaderboard,
+          statusElement: weeklyLeaderboardStatus,
+          leadingElement: weeklyLeadingHouse,
+          label: 'sections',
+          readScore: readSecondLastFilledScore,
+          successMessage: 'Weekly scores loaded from the latest completed Google Sheets columns.',
+          partialMessage: 'weekly scores loaded from Google Sheets.',
+          errorMessage: 'Unable to load weekly scores from Google Sheets.'
+        });
       })();
     </script>
   </body>
