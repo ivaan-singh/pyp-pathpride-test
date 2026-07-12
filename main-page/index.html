@@ -699,8 +699,13 @@
                   <div class="subject-row"><span>Best at</span><strong id="specialist-best">Loading</strong></div>
                   <div class="subject-row"><span>Worst at</span><strong id="specialist-worst">Loading</strong></div>
                 </div>
+                <div class="subject-stat-panel">
+                  <h4>Miscellanous</h4>
+                  <div class="subject-row"><span>Best at</span><strong id="miscellaneous-best">Loading</strong></div>
+                  <div class="subject-row"><span>Worst at</span><strong id="miscellaneous-worst">Loading</strong></div>
+                </div>
               </div>
-              <p class="stats-note">Based on each selected class's weekly subject rows. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
+              <p class="stats-note">Based on each selected class's row 7 subject totals. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
             </article>
 
             <article class="stat-card subject-comparison-card full-width-card">
@@ -760,16 +765,17 @@
         };
         const TOTAL_SCORE_RANGES = [
           { sheet: 'Scholastic', range: 'F7' },
-          { sheet: 'Specialists', range: 'H7' }
+          { sheet: 'Specialists', range: 'H7' },
+          { sheet: 'Miscellanous', range: 'H7' }
         ];
         const WEEKLY_SCORE_RANGES = [
           { sheet: 'Scholastic', range: 'F:F', column: 'F' },
           { sheet: 'Specialists', range: 'H:H', column: 'H' }
         ];
         const SUBJECT_SCORE_RANGES = {
-          scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z6' },
-          specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z6' },
-          miscellaneous: { label: 'Miscellaneous', sheet: 'Miscellaneous', range: 'B1:Z6' }
+          scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z7' },
+          specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z7' },
+          miscellaneous: { label: 'Miscellaneous', sheet: 'Miscellanous', range: 'B1:Z7' }
         };
         const REQUEST_TIMEOUT_MS = 8000;
         const CLASS_COLORS = ['gold', 'blue', 'purple', 'green', 'teal'];
@@ -788,6 +794,8 @@
         const scholasticWorst = document.getElementById('scholastic-worst');
         const specialistBest = document.getElementById('specialist-best');
         const specialistWorst = document.getElementById('specialist-worst');
+        const miscellaneousBest = document.getElementById('miscellaneous-best');
+        const miscellaneousWorst = document.getElementById('miscellaneous-worst');
         const classTabs = Array.from(document.querySelectorAll('.class-tab'));
         let selectedClass = '5P';
         let selectedCategory = 'scholastic';
@@ -869,15 +877,15 @@
         function parseSubjectScoresCsv(csvText, label) {
           const rows = parseCsvRows(csvText);
           const headers = rows[0] || [];
-          const scoreRows = rows.slice(1);
+          const totalRow = rows[6] || rows[rows.length - 1];
 
-          if (!headers.length || !scoreRows.length) {
-            throw new Error(`${label} has no subject rows.`);
+          if (!headers.length || !totalRow) {
+            throw new Error(`${label} has no subject total row.`);
           }
 
           return headers.reduce((subjects, subject, columnIndex) => {
             if (isSubjectComparisonHeader(subject)) {
-              subjects[subject] = scoreRows.map((row, rowIndex) => parseNumber(row[columnIndex], `${label} ${subject} row ${rowIndex + 1}`));
+              subjects[subject] = parseNumber(totalRow[columnIndex], `${label} ${subject} total row`);
             }
             return subjects;
           }, {});
@@ -945,9 +953,9 @@
         }
 
         function getSubjectSummary(subjects) {
-          const totals = Object.entries(subjects).map(([subject, rows]) => ({
+          const totals = Object.entries(subjects).map(([subject, total]) => ({
             subject,
-            total: rows.reduce((sum, points) => sum + points, 0)
+            total
           }));
 
           if (!totals.length) {
@@ -1006,13 +1014,13 @@
               return;
             }
 
-            Object.entries(categorySubjects).forEach(([subject, rows]) => {
+            Object.entries(categorySubjects).forEach(([subject, total]) => {
               if (!subjectTotals[subject]) {
                 subjectTotals[subject] = [];
               }
               subjectTotals[subject].push({
                 className,
-                total: rows.reduce((sum, points) => sum + points, 0)
+                total
               });
             });
           });
@@ -1040,7 +1048,7 @@
           comparisonTitle.textContent = `${scoreRange.label} comparison`;
 
           if (!comparisons.length) {
-            subjectComparisonList.innerHTML = '<p class="stats-note">No subject data available yet. Miscellaneous will appear here once that sheet is added.</p>';
+            subjectComparisonList.innerHTML = '<p class="stats-note">No subject data available yet.</p>';
             return;
           }
 
@@ -1081,6 +1089,8 @@
           scholasticWorst.textContent = 'Loading...';
           specialistBest.textContent = 'Loading...';
           specialistWorst.textContent = 'Loading...';
+          miscellaneousBest.textContent = 'Loading...';
+          miscellaneousWorst.textContent = 'Loading...';
         }
 
         function renderStatsError(className) {
@@ -1089,18 +1099,23 @@
           scholasticWorst.textContent = 'Unavailable';
           specialistBest.textContent = 'Unavailable';
           specialistWorst.textContent = 'Unavailable';
+          miscellaneousBest.textContent = 'Unavailable';
+          miscellaneousWorst.textContent = 'Unavailable';
         }
 
         function renderClassStats(className) {
           const stats = classStats[className];
           const scholastic = getSubjectSummary(stats.scholastic || {});
           const specialist = getSubjectSummary(stats.specialist || {});
+          const miscellaneous = getSubjectSummary(stats.miscellaneous || {});
 
           classStatsTitle.textContent = `${className} stats`;
           renderSubjectResult(scholasticBest, scholastic && scholastic.best);
           renderSubjectResult(scholasticWorst, scholastic && scholastic.worst);
           renderSubjectResult(specialistBest, specialist && specialist.best);
           renderSubjectResult(specialistWorst, specialist && specialist.worst);
+          renderSubjectResult(miscellaneousBest, miscellaneous && miscellaneous.best);
+          renderSubjectResult(miscellaneousWorst, miscellaneous && miscellaneous.worst);
         }
 
         function updateActiveClassTab(className) {
