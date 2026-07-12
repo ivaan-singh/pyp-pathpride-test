@@ -428,6 +428,16 @@
         padding: 1rem;
       }
 
+      .subject-stat-panel-wide {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(100%, 30rem);
+      }
+
+      .subject-stat-panel-wide .subject-row strong {
+        white-space: nowrap;
+      }
+
       .subject-stat-panel h4 {
         margin: 0 0 0.85rem;
         font-size: 1rem;
@@ -569,6 +579,10 @@
           grid-template-columns: 1fr;
         }
 
+        .subject-stat-panel-wide {
+          width: 100%;
+        }
+
         .stats-card-header {
           align-items: flex-start;
           flex-direction: column;
@@ -699,6 +713,7 @@
                   <div class="subject-row"><span>Best at</span><strong id="specialist-best">Loading</strong></div>
                   <div class="subject-row"><span>Worst at</span><strong id="specialist-worst">Loading</strong></div>
                 </div>
+                <div class="subject-stat-panel subject-stat-panel-wide">
                 <div class="subject-stat-panel">
                   <h4>Miscellanous</h4>
                   <div class="subject-row"><span>Best at</span><strong id="miscellaneous-best">Loading</strong></div>
