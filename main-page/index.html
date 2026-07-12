@@ -760,16 +760,17 @@
         };
         const TOTAL_SCORE_RANGES = [
           { sheet: 'Scholastic', range: 'F7' },
-          { sheet: 'Specialists', range: 'H7' }
+          { sheet: 'Specialists', range: 'H7' },
+          { sheet: 'Miscellanous', range: 'H7' }
         ];
         const WEEKLY_SCORE_RANGES = [
           { sheet: 'Scholastic', range: 'F:F', column: 'F' },
           { sheet: 'Specialists', range: 'H:H', column: 'H' }
         ];
         const SUBJECT_SCORE_RANGES = {
-          scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z6' },
-          specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z6' },
-          miscellaneous: { label: 'Miscellaneous', sheet: 'Miscellaneous', range: 'B1:Z6' }
+          scholastic: { label: 'Scholastic', sheet: 'Scholastic', range: 'B1:Z7' },
+          specialist: { label: 'Specialists', sheet: 'Specialists', range: 'B1:Z7' },
+          miscellaneous: { label: 'Miscellaneous', sheet: 'Miscellanous', range: 'B1:Z7' }
         };
         const REQUEST_TIMEOUT_MS = 8000;
         const CLASS_COLORS = ['gold', 'blue', 'purple', 'green', 'teal'];
@@ -869,15 +870,15 @@
         function parseSubjectScoresCsv(csvText, label) {
           const rows = parseCsvRows(csvText);
           const headers = rows[0] || [];
-          const scoreRows = rows.slice(1);
+          const totalRow = rows[6] || rows[rows.length - 1];
 
-          if (!headers.length || !scoreRows.length) {
-            throw new Error(`${label} has no subject rows.`);
+          if (!headers.length || !totalRow) {
+            throw new Error(`${label} has no subject total row.`);
           }
 
           return headers.reduce((subjects, subject, columnIndex) => {
             if (isSubjectComparisonHeader(subject)) {
-              subjects[subject] = scoreRows.map((row, rowIndex) => parseNumber(row[columnIndex], `${label} ${subject} row ${rowIndex + 1}`));
+              subjects[subject] = parseNumber(totalRow[columnIndex], `${label} ${subject} total row`);
             }
             return subjects;
           }, {});
@@ -945,9 +946,9 @@
         }
 
         function getSubjectSummary(subjects) {
-          const totals = Object.entries(subjects).map(([subject, rows]) => ({
+          const totals = Object.entries(subjects).map(([subject, total]) => ({
             subject,
-            total: rows.reduce((sum, points) => sum + points, 0)
+            total
           }));
 
           if (!totals.length) {
@@ -1006,13 +1007,13 @@
               return;
             }
 
-            Object.entries(categorySubjects).forEach(([subject, rows]) => {
+            Object.entries(categorySubjects).forEach(([subject, total]) => {
               if (!subjectTotals[subject]) {
                 subjectTotals[subject] = [];
               }
               subjectTotals[subject].push({
                 className,
-                total: rows.reduce((sum, points) => sum + points, 0)
+                total
               });
             });
           });
@@ -1040,7 +1041,7 @@
           comparisonTitle.textContent = `${scoreRange.label} comparison`;
 
           if (!comparisons.length) {
-            subjectComparisonList.innerHTML = '<p class="stats-note">No subject data available yet. Miscellaneous will appear here once that sheet is added.</p>';
+            subjectComparisonList.innerHTML = '<p class="stats-note">No subject data available yet.</p>';
             return;
           }
 
