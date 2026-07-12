@@ -699,8 +699,13 @@
                   <div class="subject-row"><span>Best at</span><strong id="specialist-best">Loading</strong></div>
                   <div class="subject-row"><span>Worst at</span><strong id="specialist-worst">Loading</strong></div>
                 </div>
+                <div class="subject-stat-panel">
+                  <h4>Miscellanous</h4>
+                  <div class="subject-row"><span>Best at</span><strong id="miscellaneous-best">Loading</strong></div>
+                  <div class="subject-row"><span>Worst at</span><strong id="miscellaneous-worst">Loading</strong></div>
+                </div>
               </div>
-              <p class="stats-note">Based on each selected class's weekly subject rows. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
+              <p class="stats-note">Based on each selected class's row 7 subject totals. The highest subject total is marked best, and the lowest subject total is marked worst.</p>
             </article>
 
             <article class="stat-card subject-comparison-card full-width-card">
@@ -789,6 +794,8 @@
         const scholasticWorst = document.getElementById('scholastic-worst');
         const specialistBest = document.getElementById('specialist-best');
         const specialistWorst = document.getElementById('specialist-worst');
+        const miscellaneousBest = document.getElementById('miscellaneous-best');
+        const miscellaneousWorst = document.getElementById('miscellaneous-worst');
         const classTabs = Array.from(document.querySelectorAll('.class-tab'));
         let selectedClass = '5P';
         let selectedCategory = 'scholastic';
@@ -1082,6 +1089,8 @@
           scholasticWorst.textContent = 'Loading...';
           specialistBest.textContent = 'Loading...';
           specialistWorst.textContent = 'Loading...';
+          miscellaneousBest.textContent = 'Loading...';
+          miscellaneousWorst.textContent = 'Loading...';
         }
 
         function renderStatsError(className) {
@@ -1090,18 +1099,23 @@
           scholasticWorst.textContent = 'Unavailable';
           specialistBest.textContent = 'Unavailable';
           specialistWorst.textContent = 'Unavailable';
+          miscellaneousBest.textContent = 'Unavailable';
+          miscellaneousWorst.textContent = 'Unavailable';
         }
 
         function renderClassStats(className) {
           const stats = classStats[className];
           const scholastic = getSubjectSummary(stats.scholastic || {});
           const specialist = getSubjectSummary(stats.specialist || {});
+          const miscellaneous = getSubjectSummary(stats.miscellaneous || {});
 
           classStatsTitle.textContent = `${className} stats`;
           renderSubjectResult(scholasticBest, scholastic && scholastic.best);
           renderSubjectResult(scholasticWorst, scholastic && scholastic.worst);
           renderSubjectResult(specialistBest, specialist && specialist.best);
           renderSubjectResult(specialistWorst, specialist && specialist.worst);
+          renderSubjectResult(miscellaneousBest, miscellaneous && miscellaneous.best);
+          renderSubjectResult(miscellaneousWorst, miscellaneous && miscellaneous.worst);
         }
 
         function updateActiveClassTab(className) {
